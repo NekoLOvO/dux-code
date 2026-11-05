@@ -1,0 +1,968 @@
+pragma Singleton
+import QtQuick
+import Quickshell
+import qs.Services
+import qs.Common
+
+// Conversation state. One rule matters: drop any delta/finished whose run_id is not
+// the active run, which keeps deleted replies from reappearing.
+QtObject {
+    id: chat
+
+    readonly property int stDone: 0
+    readonly property int stStreaming: 1
+    readonly property int stCancelled: 2
+
+    property string activeRunId: ""
+    property int liveIndex: -1
+
+    // True while this window is showing a turn it did not start (see _adoptRunningTurn): the daemon
+    // was already mid-reply when the window loaded. It changes who may stop the turn.
+    property bool adoptedRun: false
+
+    // A question from the model is waiting, and the user put it aside to read the conversation first.
+    //
+    // The dialog is modal and the daemon is blocked on the answer, so "hide it" cannot mean "dismiss
+    // it": the turn would hang until it times out. It means "I will answer in a moment", and this flag
+    // is what keeps the dialog closed and puts the way back in the ask_user tool card.
+    property bool questionHidden: false
+
+    // The tool card's button asks for the dialog back; the dialog owns itself and listens for this,
+    // the same way it already listens to Backend for new questions.
+    signal questionRestoreRequested
+
+    function restoreQuestion() {
+        questionRestoreRequested();
+    }
+
+    // Opening a *new* question always surfaces it: a flag left over from the previous one would hide a
+    // question the user has not seen yet. A question that stops pending — answered from the CLI, or
+    // voided with the connection — clears it too, so nothing is left suppressing a dialog for a
+    // question that no longer exists.
+    readonly property Connections _questionLink: Connections {
+        target: Backend
+
+        function onQuestionPending() {
+            chat.questionHidden = false;
+        }
+
+        function onQuestionsChanged() {
+            if (chat.questionHidden && Backend.questions.length === 0)
+                chat.questionHidden = false;
+        }
+    }
+
+    // The first message waits here until the daemon has created a session.
+    property var pendingSend: null
+
+    // Run start time, used by the "N steps (0:42)" label.
+    property double runStartedAt: 0
+    property int runElapsedMs: 0
+
+    readonly property Timer runTicker: Timer {
+        interval: 500
+        repeat: true
+        running: chat.busy && chat.runStartedAt > 0
+        onTriggered: chat.runElapsedMs = Date.now() - chat.runStartedAt
+    }
+
+    property ListModel messages: ListModel {}
+
+    // True while a session's rows are being inserted.
+    //
+    // Insertion is the expensive part: each row appended to the model the view is showing costs a list
+    // layout, and a measured 940-row session took 8.5 seconds of blocked main thread — long enough for
+    // the compositor to decide the window has stopped responding. Two things fix that and both need to
+    // know a load is in progress: the rows go in a chunk at a time (so the event loop keeps turning and
+    // the window answers pings), and the view stops chasing the bottom on every single one of them.
+    property bool loading: false
+
+    // Emitted once every row is in the model. The view has had no per-row change to follow, so it is
+    // told to go to the newest message and measure what it shows.
+    signal rowsLoaded
+
+    // How many rows go in per event-loop turn. Small enough that one chunk is well under a frame or
+    // two of work, large enough that the loop does not dominate the cost of a long session.
+    readonly property int _loadChunk: 12
+
+    // Counts loads so an older one that is still inserting can tell it has been superseded.
+    property int _loadToken: 0
+
+    // The compaction record of the session being loaded; applied once its rows are in.
+    property var _pendingCompaction: null
+
+    // What is left to insert, kept so a send that arrives mid-load can finish the job instead of
+    // landing among rows that have not been written yet.
+    property var _pendingRows: []
+    property int _pendingFrom: 0
+    property var _pendingDone: null
+
+    // Row of the user message the current run is about to persist. chat.send answers with
+    // the daemon's messageId, which is written back here: until then the row has no id and
+    // cannot be edited or regenerated from.
+    property int pendingUserRow: -1
+
+    // The daemon's id for the message shown at a row, "" when the row has none yet.
+    // Rows can hold several ids (merged tool results); callers act on the first one.
+    function messageIdAt(index) {
+        if (index < 0 || index >= messages.count) return ""
+        var ids = String(messages.get(index).msgIds || "")
+        return ids.split(",")[0] || ""
+    }
+
+    // The last id of a row. Branching a merged tool row has to keep every result in it,
+    // not just the first.
+    function lastMessageIdAt(index) {
+        if (index < 0 || index >= messages.count) return ""
+        var ids = String(messages.get(index).msgIds || "").split(",")
+        return ids[ids.length - 1] || ""
+    }
+
+    // A row that is still being persisted has no id yet. Say so instead of doing nothing:
+    // the caller has already closed its dialog by the time this is reached.
+    function missingId() {
+        ToastService.info(I18n.tr("That message is still being saved. Try again in a moment.", "toast when a message has no id from the daemon yet"))
+        return false
+    }
+
+    // --- search jump ---
+    // Search results carry store messageIds, not indices: loading merges consecutive tool
+    // results into one row and drops assistant messages that only hold toolCalls, so the two
+    // orderings differ. After loading, scan once to find the on-screen row.
+    property string jumpTarget: ""
+    signal jumpRequested(int index)
+
+    function jumpTo(sessionId, messageId) {
+        jumpTarget = messageId || "";
+        if (sessionId !== "" && sessionId !== Sessions.activeId) {
+            // Switching sessions triggers loadSession, which locates the jump itself.
+            Sessions.select(sessionId);
+        } else {
+            locateJump();
+        }
+    }
+
+    function locateJump() {
+        if (jumpTarget === "")
+            return;
+        const want = jumpTarget;
+        jumpTarget = "";
+        for (let i = 0; i < messages.count; i++) {
+            const ids = messages.get(i).msgIds || "";
+            // Match with surrounding commas so ids that are substrings of each other do not
+            // collide; one tool row can hold several ids.
+            if (ids !== "" && ("," + ids + ",").indexOf("," + want + ",") >= 0) {
+                jumpRequested(i);
+                return;
+            }
+        }
+    }
+
+    readonly property bool busy: activeRunId !== ""
+
+    // Everything this session has spent, in tokens, as the daemon counts it: the sum of every
+    // request's API-reported usage — all tool steps of every turn, plus the summary and title
+    // requests. It is absolute and only grows; compaction shrinks what is *sent* from then on, not
+    // what was already billed.
+    //
+    // The number is assigned from daemon events, never accumulated here: the same total arrives on
+    // every step and again on run.finished.
+    property int sessionTokens: 0
+
+    function send(text, attachments) {
+        var t = String(text === undefined || text === null ? "" : text).trim()
+        var atts = []
+        if (attachments) {
+            for (var i = 0; i < attachments.length; i++) {
+                var p = String(attachments[i] || "")
+                if (p !== "") atts.push(p)
+            }
+        }
+        if (t.length === 0 && atts.length === 0) return
+        // A session still being inserted must be complete first, or this message lands in the middle of
+        // it and the rows after it arrive underneath.
+        if (loading) _finishRows()
+        if (busy) cancel()
+
+        // Without a session, create one first; the daemon has no implicit current session.
+        if (Sessions.activeId === "") {
+            pendingSend = { "text": t, "attachments": atts }
+            Sessions.create()
+            return
+        }
+
+        pendingUserRow = messages.count
+        messages.append({
+            msgIds: "",
+            isUser: true,
+            kind: "text",
+            toolName: "",
+            toolCallId: "",
+            status: stDone,
+            rawText: t,
+            runId: "",
+            elapsedMs: 0,
+            attachments: atts.join("\n"),
+            usageIn: 0,
+            usageOut: 0,
+            truncated: false,
+            reasoning: "",
+            toolsJson: "[]"
+        })
+
+        var rid = "run-" + Date.now()
+        activeRunId = rid
+        runStartedAt = Date.now()
+        runElapsedMs = 0
+        messages.append({
+            msgIds: "",
+            isUser: false,
+            kind: "text",
+            toolName: "",
+            toolCallId: "",
+            status: stStreaming,
+            rawText: "",
+            runId: rid,
+            elapsedMs: 0,
+            attachments: "",
+            usageIn: 0,
+            usageOut: 0,
+            truncated: false,
+            reasoning: "",
+            toolsJson: "[]"
+        })
+        liveIndex = messages.count - 1
+
+        Agent.start(rid, t, atts)
+    }
+
+    function cancel() {
+        if (!busy) return
+        Agent.cancel()
+    }
+
+    // The one summary standing in for earlier history: { upToId, summary, count }, or null.
+    //
+    // The transcript keeps every message — only what is sent is replaced — so this is shown as a seam
+    // in the conversation, not by hiding rows. One summary is in play at a time: a later compaction
+    // recomputes the cut against the whole history and overwrites the record, so count is "how many
+    // messages the summary currently stands in for", not a sum of every compaction.
+    property var compaction: null
+    // The row that seam is drawn above, -1 when there is none.
+    property int compactionRow: -1
+
+    // Adopt a compaction record (from the daemon's event or from a loaded session) and find which row
+    // the seam belongs above.
+    function _setCompaction(c) {
+        // A record with no cut point, or with nothing dropped, describes no boundary.
+        compaction = (c && c.upToId && (c.count || 0) > 0)
+            ? { "upToId": c.upToId, "summary": c.summary || "", "count": c.count }
+            : null
+        _locateCompaction()
+    }
+
+    // The cut point is a message id; the row is found by id because rows merge and drop messages.
+    function _locateCompaction() {
+        var row = -1
+        if (compaction) {
+            for (var i = 0; i < messages.count; i++) {
+                if (String(messages.get(i).msgIds || "").split(",").indexOf(compaction.upToId) !== -1) {
+                    row = i
+                    break
+                }
+            }
+        }
+        compactionRow = row
+    }
+
+    function _compacted(sessionId, data) {
+        if (sessionId !== "" && sessionId !== Sessions.activeId)
+            return
+        _setCompaction(data)
+    }
+
+    // Switch session: reload persisted messages, and drop the streaming run (it belongs to the old one).
+    function loadSession(id, done) {
+        // A turn this window started is this window's to stop. An adopted one belongs to the daemon —
+        // leaving the session must not kill a reply the user is waiting for, and coming back adopts
+        // it again where it left off.
+        if (busy) {
+            if (adoptedRun)
+                Agent.release();
+            else
+                Agent.cancel();
+        }
+        messages.clear()
+        loading = true
+        _loadToken++
+        pendingUserRow = -1
+        activeRunId = ""
+        liveIndex = -1
+        compaction = null
+        compactionRow = -1
+        sessionTokens = 0
+        if (!id) {
+            loading = false
+            if (done) done()
+            // Nothing to scroll to without a session; drop the pending target so a later
+            // session does not jump to an unrelated position.
+            jumpTarget = ""
+            return
+        }
+
+        // Two loads of the same session — a reload on connect racing a click — both pass the id
+        // check below, and the second one appends its rows on top of the first's: the transcript
+        // appears twice. The token tells them apart; only the newest load may install its rows.
+        const token = _loadToken;
+        Backend.sendRequest("session.get", { "id": id }, function (res, err) {
+            if (token !== _loadToken)
+                return
+            if (err || !res || !res.session) {
+                // Nothing arrived, so the rows on screen belong to a session that is no longer selected.
+                // Show nothing rather than another conversation under this title.
+                loading = false
+                if (id === Sessions.activeId)
+                    messages.clear()
+                return
+            }
+            if (id !== Sessions.activeId) { // Switched again mid-load.
+                loading = false
+                return
+            }
+            // Set after the rows are built: the seam needs a row to sit above.
+            var savedCompaction = res.session.compaction || null
+            // session.get reports whether a turn is running; _finishRows acts on it once the rows are in.
+            _pendingBusy = res.busy === true
+            // The daemon keeps the running total (and recovers it for files written before it
+            // existed), so opening a session shows its spend without replaying a single turn.
+            const tu = res.session.totalUsage
+            sessionTokens = tu ? (tu.input || 0) + (tu.output || 0) : 0
+            var list = res.session.messages || []
+            // Older tool messages carry no toolArgs; recover them from the preceding
+            // assistant message's toolCalls.
+            var callArgs = {}
+            for (var k = 0; k < list.length; k++) {
+                var tcs = list[k].toolCalls || []
+                for (var t = 0; t < tcs.length; t++) {
+                    if (tcs[t] && tcs[t].id)
+                        callArgs[tcs[t].id] = (tcs[t].function && tcs[t].function.arguments) || ""
+                }
+            }
+            var rows = []
+            var i = 0
+            while (i < list.length) {
+                var m = list[i]
+                var role = m.role || "assistant"
+                // Assistant messages with only tool_calls are hidden: the tool card and the
+                // final answer carry the information.
+                if (role === "assistant" && (m.text || "") === "" && (m.toolCalls || []).length > 0) {
+                    i++
+                    continue
+                }
+                // Consecutive tool results merge into one row (models often call several at once).
+                if (role === "tool") {
+                    var group = []
+                    while (i < list.length && (list[i].role || "assistant") === "tool") {
+                        group.push({
+                            "callId": list[i].toolCallId || "",
+                            "msgId": list[i].id || "",
+                            "name": list[i].name || "",
+                            "args": list[i].toolArgs || callArgs[list[i].toolCallId] || "",
+                            "output": list[i].text || "",
+                            "running": false
+                        })
+                        i++
+                    }
+                    rows.push({
+                        // This row may merge several tool results; record them all so a search
+                        // hit maps back to it.
+                        msgIds: group.map(g => g.msgId).join(","),
+                        isUser: false,
+                        kind: "tool",
+                        toolName: "",
+                        toolCallId: "",
+                        toolsJson: JSON.stringify(group),
+                        status: stDone,
+                        rawText: "",
+                        runId: "",
+                        elapsedMs: 0,
+                        attachments: "",
+                        reasoning: "",
+                        usageIn: 0,
+                        usageOut: 0,
+                        truncated: false
+                    })
+                    continue
+                }
+                rows.push({
+                    // Jumps map by messageId, not index: rows merge tool results and drop empty
+                    // assistant messages, so the two orders differ.
+                    msgIds: m.id || "",
+                    isUser: role === "user",
+                    kind: "text",
+                    toolName: "",
+                    toolCallId: "",
+                    toolsJson: "[]",
+                    status: stDone,
+                    rawText: m.text || "",
+                    runId: "",
+                    elapsedMs: m.elapsedMs || 0,
+                    attachments: (m.attachments || []).join("\n"),
+                    reasoning: m.reasoning || "",
+                    // lastUsage is the raw last-request report; older sessions only have the
+                    // cumulative usage, which beats showing 0.
+                    usageIn: ((m.lastUsage || m.usage) && (m.lastUsage || m.usage).input) || 0,
+                    usageOut: ((m.lastUsage || m.usage) && (m.lastUsage || m.usage).output) || 0,
+                    truncated: m.truncated === true
+                })
+                i++
+            }
+            // The rows are built; putting them into the model is the part that has to be spread out.
+            _pendingCompaction = savedCompaction
+            _insertRows(rows, 0, _loadToken, done)
+        })
+    }
+
+    // Appends rows a chunk at a time, then finishes the load.
+    //
+    // token is checked on every chunk: switching sessions mid-load must not leave the first session's
+    // rows half-inserted under the second session's title.
+    function _insertRows(rows, from, token, done) {
+        if (token !== _loadToken)
+            return
+        _pendingRows = rows
+        _pendingDone = done
+        const end = Math.min(from + _loadChunk, rows.length)
+        for (let i = from; i < end; i++)
+            messages.append(rows[i])
+        // Where the next insert resumes — which is also where _finishRows would resume, and it
+        // appends from here. Leaving it at `from` made the last chunk land twice.
+        _pendingFrom = end
+        if (end < rows.length) {
+            Qt.callLater(function () { _insertRows(rows, end, token, done) })
+            return
+        }
+        _finishRows()
+    }
+
+    // Inserts everything still queued, in one turn. Used by the chunked path when it runs out, and by
+    // anything that needs the transcript complete right now (a send must not land among rows that have
+    // not been written yet).
+    function _finishRows() {
+        const rows = _pendingRows
+        for (let i = _pendingFrom; i < rows.length; i++)
+            messages.append(rows[i])
+        _pendingRows = []
+        _pendingFrom = 0
+        const done = _pendingDone
+        _pendingDone = null
+        loading = false
+        rowsLoaded()
+        _setCompaction(_pendingCompaction)
+        // The daemon may still be mid-reply for this session — the window reloaded while a turn was
+        // running, or the turn came from the CLI. Say so, or the composer shows "send" while text is
+        // arriving and nothing on screen moves.
+        if (_pendingBusy)
+            _adoptRunningTurn()
+        else
+            adoptedRun = false
+        if (done) done()
+        locateJump()
+    }
+
+    property bool _pendingBusy: false
+
+    // Join a turn the daemon is already producing.
+    //
+    // The step in flight is not on disk yet — only the steps that finished are — so the rows just
+    // loaded end at the last completed step. A fresh streaming row gives the incoming text somewhere
+    // to land; whatever that step had already written before the reload arrives with its run.finished,
+    // which carries the persisted text.
+    function _adoptRunningTurn() {
+        const rid = Agent.adopt(Sessions.activeId)
+        if (rid === "")
+            return
+        adoptedRun = true
+        activeRunId = rid
+        // The daemon does not say when the turn began, and a time counted from now is the honest
+        // approximation: it is the part of the turn this window witnessed.
+        runStartedAt = Date.now()
+        runElapsedMs = 0
+        _newStep(rid)
+    }
+
+    // ---------- edit / regenerate / branch ----------
+
+    // Edit a user message: overwrite it, drop everything after it, then regenerate.
+    function editMessage(index, text) {
+        if (busy) return false
+        if (index < 0 || index >= messages.count) return false
+        if (!messages.get(index).isUser) return false
+        var t = String(text || "").trim()
+        if (t === "") return false
+        // Addressed by id: a row index is not a session.messages index.
+        var mid = messageIdAt(index)
+        if (mid === "")
+            return missingId()
+
+        Backend.sendRequest("session.rewrite", {
+            "id": Sessions.activeId,
+            "messageId": mid,
+            "text": t
+        }, function (res, err) {
+            if (err) {
+                ToastService.info(err)
+                return
+            }
+            // The daemon already dropped everything after this message, and the rows below it here are
+            // that same content. Reloading the session to rediscover it re-reads and re-lays-out the
+            // whole transcript — seconds on a long one — for a change that is one row deep.
+            messages.setProperty(index, "rawText", t)
+            chat._dropRowsAfter(index)
+            chat._startRegenerate()
+        })
+        return true
+    }
+
+    // Regenerate a reply: truncate after its prompt, then run again.
+    function regenerate(index) {
+        if (busy) return false
+        var keep = -1
+        for (var i = Math.min(index, messages.count - 1); i >= 0; i--) {
+            if (messages.get(i).isUser) {
+                keep = i
+                break
+            }
+        }
+        if (keep < 0) return false
+        var mid = messageIdAt(keep)
+        if (mid === "")
+            return missingId()
+
+        Backend.sendRequest("session.truncate", {
+            "id": Sessions.activeId,
+            "messageId": mid
+        }, function (res, err) {
+            if (err) {
+                ToastService.info(err)
+                return
+            }
+            chat._dropRowsAfter(keep)
+            chat._startRegenerate()
+        })
+        return true
+    }
+
+    // Removes every row below one, which is what truncate and rewrite do in the daemon.
+    //
+    // The compaction seam has to be re-found: if its cut point was one of the dropped messages the
+    // summary no longer marks anything, and the daemon drops the record for the same reason.
+    function _dropRowsAfter(row) {
+        if (row < 0 || row >= messages.count - 1) {
+            if (compaction)
+                _locateCompaction()
+            return
+        }
+        messages.remove(row + 1, messages.count - row - 1)
+        if (compaction) {
+            _locateCompaction()
+            if (compactionRow < 0)
+                _setCompaction(null)
+        }
+    }
+
+    // Fork into a new session up to and including index, then switch to it.
+    function branch(index) {
+        if (Sessions.activeId === "") return false
+        var mid = lastMessageIdAt(index)
+        if (mid === "")
+            return missingId()
+        Backend.sendRequest("session.branch", {
+            "id": Sessions.activeId,
+            "messageId": mid
+        }, function (res, err) {
+            if (err || !res || !res.session) {
+                ToastService.info(err || I18n.tr("Could not create the branch", "branch creation failed"));
+                return
+            }
+            Sessions.reload()
+            Sessions.select(res.session.id)
+            ToastService.info(I18n.tr("Branch created", "branch created toast"));
+        })
+        return true
+    }
+
+    // Append an empty assistant message, then have the daemon rerun the last user message.
+    function _startRegenerate() {
+        if (Sessions.activeId === "") return
+        var rid = "run-" + Date.now()
+        activeRunId = rid
+        runStartedAt = Date.now()
+        runElapsedMs = 0
+        messages.append({
+            msgIds: "",
+            isUser: false,
+            kind: "text",
+            toolName: "",
+            toolCallId: "",
+            status: stStreaming,
+            rawText: "",
+            runId: rid,
+            elapsedMs: 0,
+            attachments: "",
+            usageIn: 0,
+            usageOut: 0,
+            truncated: false,
+            reasoning: "",
+            toolsJson: "[]"
+        })
+        liveIndex = messages.count - 1
+        Agent.regenerate(rid)
+    }
+
+    // Deltas carry only the new chunk, so append; replacing would leave the last ~50 ms only.
+    function _setLive(rid, chunk) {
+        if (rid !== activeRunId) return
+        if (liveIndex < 0 || liveIndex >= messages.count) return
+        const prev = messages.get(liveIndex).rawText || ""
+        messages.set(liveIndex, { rawText: prev + chunk, status: stStreaming })
+    }
+
+    // Thinking has its own channel: it arrives first and must stay out of the answer.
+    function _setReasoning(rid, chunk) {
+        if (rid !== activeRunId) return
+        if (liveIndex < 0 || liveIndex >= messages.count) return
+        const prev = messages.get(liveIndex).reasoning || ""
+        messages.set(liveIndex, { reasoning: prev + chunk })
+    }
+
+    function _setReasoningText(rid, text) {
+        if (rid !== activeRunId) return
+        if (liveIndex < 0 || liveIndex >= messages.count) return
+        messages.set(liveIndex, { reasoning: text })
+    }
+
+    // One bubble spins at a time. A step ends or a tool call starts once its text is final;
+    // leaving it running shows an empty bubble, since models often emit no text when calling
+    // tools.
+    function _closeLive() {
+        if (liveIndex < 0 || liveIndex >= messages.count) return
+        if (messages.get(liveIndex).status !== stStreaming) return
+        messages.set(liveIndex, { status: stDone })
+    }
+
+    // One run can call the model several times; each step gets its own bubble so tool text
+    // and the answer do not merge.
+    function _newStep(rid) {
+        if (rid !== activeRunId) return
+        // An adopted turn opens a placeholder row before the stream resumes; if its first event is
+        // "a new step started", that placeholder is the row this step belongs in. Closing it instead
+        // would leave an empty bubble at the top of the reply.
+        if (liveIndex >= 0 && liveIndex < messages.count) {
+            const live = messages.get(liveIndex)
+            if (live.runId === rid && live.status === stStreaming && live.kind === "text"
+                    && String(live.rawText || "") === "" && String(live.reasoning || "") === "")
+                return
+        }
+        _closeLive()
+        messages.append({
+            msgIds: "",
+            isUser: false,
+            kind: "text",
+            toolName: "",
+            toolCallId: "",
+            status: stStreaming,
+            rawText: "",
+            runId: rid,
+            elapsedMs: 0,
+            attachments: "",
+            usageIn: 0,
+            usageOut: 0,
+            truncated: false,
+            reasoning: "",
+            toolsJson: "[]"
+        })
+        liveIndex = messages.count - 1
+    }
+
+    // Consecutive tool calls share one card: one card per call would stretch the thread and
+    // make the output unreadable.
+    function _toolStarted(rid, callId, name, args) {
+        if (rid !== activeRunId) return
+        // A tool call means this step's text is complete.
+        _closeLive()
+        var item = {
+            "callId": callId,
+            "name": name,
+            "args": String(args || ""),
+            "output": "",
+            "running": true
+        }
+        var lastIndex = messages.count - 1
+        if (lastIndex >= 0) {
+            var last = messages.get(lastIndex)
+            if (last.kind === "tool" && last.runId === rid) {
+                var list = _parseTools(last.toolsJson)
+                list.push(item)
+                messages.set(lastIndex, {
+                    "toolsJson": JSON.stringify(list),
+                    "status": stStreaming
+                })
+                liveIndex = lastIndex
+                return
+            }
+        }
+        messages.append({
+            msgIds: "",
+            isUser: false,
+            kind: "tool",
+            toolName: "",
+            toolCallId: "",
+            toolsJson: JSON.stringify([item]),
+            status: stStreaming,
+            rawText: "",
+            runId: rid,
+            elapsedMs: 0,
+            attachments: "",
+            reasoning: "",
+            usageIn: 0,
+            usageOut: 0,
+            truncated: false
+        })
+        liveIndex = messages.count - 1
+    }
+
+    // ListModel turns JS arrays into QQmlListModel, so groups are stored as JSON strings and
+    // parsed back on use.
+    function _parseTools(json) {
+        try {
+            var a = JSON.parse(json || "[]")
+            return (a instanceof Array) ? a : []
+        } catch (e) {
+            return []
+        }
+    }
+
+    function _toolFinished(rid, callId, output) {
+        if (rid !== activeRunId) return
+        for (var i = messages.count - 1; i >= 0; i--) {
+            var row = messages.get(i)
+            if (row.kind !== "tool") continue
+            var list = _parseTools(row.toolsJson)
+            var hit = -1
+            for (var j = 0; j < list.length; j++) {
+                if (list[j].callId === callId) hit = j
+            }
+            if (hit < 0) continue
+            var next = list.slice()
+            next[hit] = {
+                "callId": callId,
+                "name": next[hit].name,
+                "args": next[hit].args,
+                "output": String(output || ""),
+                "running": false
+            }
+            var anyRunning = false
+            for (var k = 0; k < next.length; k++) {
+                if (next[k].running) anyRunning = true
+            }
+            messages.set(i, {
+                "toolsJson": JSON.stringify(next),
+                "status": anyRunning ? stStreaming : stDone
+            })
+            return
+        }
+    }
+
+    // One reply = the assistant text from this message back to the previous user message.
+    // Tool steps are process, not content, so "copy" at the end of a reply yields the whole
+    // reply rather than the last chunk.
+    function replyText(index) {
+        let start = index;
+        while (start > 0) {
+            const prev = messages.get(start - 1);
+            if (!prev || prev.isUser)
+                break;
+            start--;
+        }
+        let out = "";
+        for (let i = start; i <= index; i++) {
+            const m = messages.get(i);
+            if (!m || m.isUser || m.kind === "tool")
+                continue;
+            const t = String(m.rawText || "").trim();
+            if (t === "")
+                continue;
+            out += (out === "" ? "" : "\n\n") + t;
+        }
+        return out;
+    }
+
+    // Per-message usage: the reply row uses it to say how many tokens the output cap cut off. The
+    // session total (the chip) comes from the daemon instead — see sessionTokens.
+    function _setUsage(rid, input, output) {
+        if (rid !== activeRunId) return
+        if (liveIndex < 0 || liveIndex >= messages.count) return
+        // Usage belongs to the text reply; skip it when liveIndex points at a tool card.
+        if (messages.get(liveIndex).kind === "tool") return
+        messages.set(liveIndex, { usageIn: input || 0, usageOut: output || 0 })
+    }
+
+    // The persisted reply is authoritative; reconcile against it so a dropped delta does not
+    // leave a gap.
+    function _settleText(rid, text) {
+        if (rid !== activeRunId) return
+        if (liveIndex < 0 || liveIndex >= messages.count) return
+        if (messages.get(liveIndex).kind === "tool") return
+        if (typeof text !== "string" || text === "") return
+        messages.set(liveIndex, { rawText: text })
+    }
+
+    function _settle(rid, cancelled, truncated) {
+        if (rid !== activeRunId) return
+        var elapsed = runStartedAt > 0 ? Date.now() - runStartedAt : runElapsedMs
+        var finalStatus = cancelled ? stCancelled : stDone
+        // liveIndex is cleared below; the placeholder check needs it afterwards.
+        var settled = liveIndex
+
+        // Finish every bubble of this run, not just liveIndex: one run produces one bubble per
+        // step, and this also covers a run interrupted before its tool reported completion.
+        for (var i = messages.count - 1; i >= 0; i--) {
+            var it = messages.get(i)
+            if (it.runId !== rid || it.status !== stStreaming) continue
+            messages.set(i, { status: finalStatus })
+        }
+
+        // The bubble's status is not the tool's. A call that never reported completion — the run was
+        // cancelled while it was blocked, or the question it was blocked on went away with the
+        // connection — keeps `running: true` inside its group. Left there the card spins forever, and
+        // an `ask_user` left running goes on offering "Show the question" for a question nobody is
+        // waiting on.
+        for (var t = messages.count - 1; t >= 0; t--) {
+            var toolRow = messages.get(t)
+            if (toolRow.runId !== rid || toolRow.kind !== "tool") continue
+            var group = _parseTools(toolRow.toolsJson)
+            var changed = false
+            for (var u = 0; u < group.length; u++) {
+                if (!group[u] || group[u].running !== true) continue
+                group[u] = {
+                    "callId": group[u].callId,
+                    "name": group[u].name,
+                    "args": group[u].args,
+                    "output": group[u].output,
+                    "running": false
+                }
+                changed = true
+            }
+            if (changed)
+                messages.set(t, { "toolsJson": JSON.stringify(group) })
+        }
+
+        if (liveIndex >= 0 && liveIndex < messages.count)
+            messages.set(liveIndex, {
+                status: finalStatus,
+                elapsedMs: elapsed,
+                truncated: truncated === true
+            })
+        activeRunId = ""
+        liveIndex = -1
+        runStartedAt = 0
+        runElapsedMs = elapsed
+        // An adopted turn ends like any other; the next load asks the daemon again.
+        adoptedRun = false
+        // An adopted turn that turns out to be over leaves its placeholder behind: an empty bubble
+        // that reads as a reply which said nothing.
+        _dropEmptyLiveRow(settled)
+    }
+
+    // Removes the row at index if it never received anything.
+    function _dropEmptyLiveRow(index) {
+        if (index < 0 || index >= messages.count)
+            return
+        const row = messages.get(index)
+        if (row.kind !== "text" || row.status === stStreaming)
+            return
+        if (String(row.rawText || "") !== "" || String(row.reasoning || "") !== "")
+            return
+        messages.remove(index)
+        if (compaction)
+            _locateCompaction()
+    }
+
+    readonly property Connections _link: Connections {
+        target: Agent
+
+        function onReasoning(rid, text) {
+            chat._setReasoning(rid, text)
+        }
+
+        function onFinalReasoning(rid, text) {
+            chat._setReasoningText(rid, text)
+        }
+
+        function onDelta(rid, text) {
+            chat._setLive(rid, text)
+        }
+
+        function onStepStarted(rid, step) {
+            chat._newStep(rid)
+        }
+
+        function onToolStarted(rid, callId, name, args) {
+            chat._toolStarted(rid, callId, name, args)
+        }
+
+        function onToolFinished(rid, callId, output) {
+            chat._toolFinished(rid, callId, output)
+        }
+
+        function onUsage(rid, input, output) {
+            chat._setUsage(rid, input, output)
+        }
+
+        // Absolute, from the daemon: assign, never add.
+        function onSessionUsage(total) {
+            chat.sessionTokens = total
+        }
+
+        function onFinalText(rid, text) {
+            chat._settleText(rid, text)
+        }
+
+        function onCompacted(sessionId, record) {
+            chat._compacted(sessionId, record)
+        }
+
+        // chat.send answered with the persisted user message id; attach it so the row can be
+        // edited or regenerated without waiting for a reload.
+        function onSent(rid, messageId) {
+            if (rid !== chat.activeRunId || messageId === "")
+                return
+            if (chat.pendingUserRow >= 0 && chat.pendingUserRow < chat.messages.count)
+                chat.messages.set(chat.pendingUserRow, { "msgIds": messageId })
+            chat.pendingUserRow = -1
+        }
+
+        function onFinished(rid, cancelled, truncated) {
+            chat._settle(rid, cancelled, truncated)
+        }
+
+        function onFailed(rid, message) {
+            // Finish on failure too, leaving the message "interrupted"; the error goes to a toast.
+            ToastService.show(message);
+        }
+    }
+
+    // Flush the queued message once the session exists.
+    readonly property Connections _sessionLink: Connections {
+        target: Sessions
+
+        function onActiveIdChanged() {
+            if (chat.pendingSend) {
+                var p = chat.pendingSend
+                chat.pendingSend = null
+                chat.send(p.text, p.attachments)
+            }
+        }
+    }
+}

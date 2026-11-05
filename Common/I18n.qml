@@ -1,0 +1,252 @@
+pragma Singleton
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import Qt.labs.folderlistmodel
+import Quickshell
+import Quickshell.Io
+import qs.Services
+
+Singleton {
+    id: root
+
+    readonly property var log: Log.scoped("I18n")
+
+    property string _resolvedLocale: "en"
+
+    readonly property string _rawLocale: SettingsData.language === "" ? Qt.locale().name : SettingsData.language
+    readonly property string _lang: _rawLocale.split(/[_-]/)[0]
+    readonly property var _candidates: {
+        const fullUnderscore = _rawLocale;
+        const fullHyphen = _rawLocale.replace("_", "-");
+        return [fullUnderscore, fullHyphen, _lang].filter(c => c && c !== "en");
+    }
+
+    readonly property var _rtlLanguages: ["ar", "he", "iw", "fa", "ur", "ps", "sd", "dv", "yi", "ku"]
+    readonly property bool isRtl: _rtlLanguages.includes(_lang)
+
+    readonly property url translationsFolder: Qt.resolvedUrl("../translations/poexports")
+    readonly property url commonTranslationsFolder: Qt.resolvedUrl("../DCommon/translations/poexports")
+
+    property var presentLocales: ({
+            "en": Qt.locale("en")
+        })
+    property var translations: ({})
+    property bool translationsLoaded: false
+    property var commonTranslations: ({})
+    property bool commonTranslationsLoaded: false
+
+    property url _selectedPath: ""
+    property url _commonSelectedPath: ""
+
+    Connections {
+        target: SettingsData
+        function onLanguageChanged() {
+            if (dir.status === FolderListModel.Ready)
+                root._pickTranslation();
+            if (commonDir.status === FolderListModel.Ready)
+                root._pickCommonTranslation();
+        }
+    }
+
+    FolderListModel {
+        id: dir
+        folder: root.translationsFolder
+        nameFilters: ["*.json"]
+        showDirs: false
+        showDotAndDotDot: false
+
+        onStatusChanged: if (status === FolderListModel.Ready) {
+            root._loadPresentLocales();
+            root._pickTranslation();
+        }
+    }
+
+    FolderListModel {
+        id: commonDir
+        folder: root.commonTranslationsFolder
+        nameFilters: ["*.json"]
+        showDirs: false
+        showDotAndDotDot: false
+
+        onStatusChanged: if (status === FolderListModel.Ready) {
+            root._pickCommonTranslation();
+        }
+    }
+
+    FileView {
+        id: translationLoader
+        path: root._selectedPath
+
+        onLoaded: {
+            try {
+                root.translations = JSON.parse(text());
+                root.translationsLoaded = true;
+                root._rebuildReverse();
+                root.log.info(`Loaded translations for '${root._resolvedLocale}' (${Object.keys(root.translations).length} contexts)`);
+            } catch (e) {
+                root.log.warn(`Error parsing '${root._resolvedLocale}':`, e, "- falling back to English");
+                root._fallbackToEnglish();
+            }
+        }
+
+        onLoadFailed: error => {
+            root.log.warn(`Failed to load '${root._resolvedLocale}' (${error}), falling back to English`);
+            root._fallbackToEnglish();
+        }
+    }
+
+    FileView {
+        id: commonTranslationLoader
+        path: root._commonSelectedPath
+        printErrors: false
+
+        onLoaded: {
+            try {
+                root.commonTranslations = JSON.parse(text());
+                root.commonTranslationsLoaded = true;
+                root._rebuildReverse();
+                root.log.info(`Loaded DCommon translations (${Object.keys(root.commonTranslations).length} contexts)`);
+            } catch (e) {
+                root.log.warn("Error parsing DCommon translations:", e);
+            }
+        }
+    }
+
+    function _loadPresentLocales() {
+        if (Object.keys(presentLocales).length > 1)
+            return;
+        const found = {
+            "en": Qt.locale("en")
+        };
+        for (let i = 0; i < dir.count; i++) {
+            const name = dir.get(i, "fileName");
+            if (!name || !name.endsWith(".json"))
+                continue;
+            const shortName = name.slice(0, -5);
+            found[shortName] = Qt.locale(shortName);
+        }
+        presentLocales = found;
+    }
+
+    function _pickTranslation() {
+        for (let i = 0; i < _candidates.length; i++) {
+            const cand = _candidates[i];
+            if (presentLocales[cand] === undefined)
+                continue;
+            if (cand === _resolvedLocale)
+                return;
+            useLocale(cand, cand.startsWith("en") ? "" : translationsFolder + "/" + cand + ".json");
+            return;
+        }
+
+        _resolvedLocale = "en";
+        _fallbackToEnglish();
+    }
+
+    function useLocale(localeTag, fileUrl) {
+        _resolvedLocale = localeTag || "en";
+        _selectedPath = fileUrl;
+        translationsLoaded = false;
+        translations = ({});
+        log.info(`Using locale '${localeTag}' from ${fileUrl}`);
+    }
+
+    function _fallbackToEnglish() {
+        _selectedPath = "";
+        translationsLoaded = false;
+        translations = ({});
+    }
+
+    function _pickCommonTranslation() {
+        const present = {};
+        for (let i = 0; i < commonDir.count; i++) {
+            const name = commonDir.get(i, "fileName");
+            if (name && name.endsWith(".json"))
+                present[name.slice(0, -5)] = true;
+        }
+        for (let i = 0; i < _candidates.length; i++) {
+            if (!present[_candidates[i]])
+                continue;
+            const path = commonTranslationsFolder + "/" + _candidates[i] + ".json";
+            if (path === _commonSelectedPath)
+                return;
+            commonTranslationsLoaded = false;
+            commonTranslations = ({});
+            _commonSelectedPath = path;
+            return;
+        }
+        commonTranslationsLoaded = false;
+        commonTranslations = ({});
+        _commonSelectedPath = "";
+    }
+
+    // translation -> the English terms that produced it.
+    //
+    // Everything the UI shows is already translated, so a search box that only looked at the widget
+    // text could never match "opacity" on a Chinese desktop. This is the other direction, so a row can
+    // be found by either language. Several English terms can share one translation ("Off", "On"),
+    // which is why the value is a list.
+    property var _reverse: ({})
+
+    function _rebuildReverse() {
+        const out = {};
+        const add = table => {
+            for (const term in table) {
+                const translated = table[term] && table[term][term];
+                if (!translated || translated === term)
+                    continue;
+                if (!out[translated])
+                    out[translated] = [];
+                if (out[translated].indexOf(term) === -1)
+                    out[translated].push(term);
+            }
+        };
+        if (translationsLoaded)
+            add(translations);
+        if (commonTranslationsLoaded)
+            add(commonTranslations);
+        _reverse = out;
+    }
+
+    // The English terms behind a translated string, space separated; "" when it was never translated.
+    function englishFor(translated) {
+        const hit = _reverse[translated];
+        return hit ? hit.join(" ") : "";
+    }
+
+    function _lookup(table, term, context) {
+        if (!table)
+            return "";
+        const ctx = context || term;
+        if (table[ctx] && table[ctx][term])
+            return table[ctx][term];
+        for (const c in table) {
+            if (table[c] && table[c][term])
+                return table[c][term];
+        }
+        return "";
+    }
+
+    function tr(term, context) {
+        if (translationsLoaded) {
+            const hit = _lookup(translations, term, context);
+            if (hit)
+                return hit;
+        }
+        if (commonTranslationsLoaded) {
+            const hit = _lookup(commonTranslations, term, context);
+            if (hit)
+                return hit;
+        }
+        return term;
+    }
+
+    function trContext(context, term) {
+        if (translationsLoaded && translations[context] && translations[context][term])
+            return translations[context][term];
+        if (commonTranslationsLoaded && commonTranslations[context] && commonTranslations[context][term])
+            return commonTranslations[context][term];
+        return term;
+    }
+}

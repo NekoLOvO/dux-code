@@ -1,0 +1,259 @@
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import QtQuick.Templates as T
+import qs.Common
+import qs.DCommon.Widgets
+
+T.Control {
+    id: root
+
+    LayoutMirroring.enabled: I18n.isRtl
+    LayoutMirroring.childrenInherit: true
+
+    readonly property bool isSettingsRow: true
+
+    property string title: ""
+    property string subtitle: ""
+    // Extra words the row can be found by, when the wording on screen is not what someone would type
+    // ("frosted" for background blur). Space separated, translated per locale; left empty is fine —
+    // the title, its card and its page are indexed anyway.
+    property string keywords: ""
+    property color subtitleColor: Theme.surfaceVariantText
+    property string iconName: ""
+    property bool clickable: false
+    property bool showChevron: false
+    property string trailingBadge: ""
+    property color trailingBadgeColor: Theme.surfaceVariantText
+    property real paddingH: SettingsMetrics.rowPaddingH
+    property real paddingV: SettingsMetrics.rowPaddingV
+    // Keyboard selection in a list of rows (settings search), not the hover layer.
+    property bool highlighted: false
+    property color rowColor: highlighted ? Theme.blend(SettingsMetrics.rowColor, Theme.primary, SettingsMetrics.highlightBlend) : SettingsMetrics.rowColor
+    property color iconColor: Theme.primary
+    property color titleColor: Theme.surfaceText
+    property string tooltipText: ""
+
+    default property alias trailing: trailingSlot.data
+    property alias leading: leadingSlot.data
+    property alias body: bodySlot.data
+
+    readonly property bool hasBody: bodySlot.visibleChildren.length > 0
+    readonly property bool hasText: title !== "" || subtitle !== ""
+    readonly property bool isFirstInGroup: edgeRow(true) === root
+    readonly property bool isLastInGroup: edgeRow(false) === root
+    property real topRadius: isFirstInGroup ? Theme.groupedListOuterRadius : Theme.groupedListInnerRadius
+    property real bottomRadius: isLastInGroup ? Theme.groupedListOuterRadius : Theme.groupedListInnerRadius
+    readonly property real minHeight: subtitle !== "" ? Theme.listItemTwoLineHeight : Theme.listItemHeight
+
+    signal clicked
+
+    focusPolicy: clickable ? Qt.StrongFocus : Qt.NoFocus
+    Accessible.role: clickable ? Accessible.Button : Accessible.NoRole
+    Accessible.name: title
+    Accessible.description: subtitle
+    Accessible.onPressAction: {
+        if (clickable && enabled)
+            clicked();
+    }
+
+    Keys.onPressed: event => {
+        if (!clickable || !enabled)
+            return;
+        switch (event.key) {
+        case Qt.Key_Space:
+        case Qt.Key_Return:
+        case Qt.Key_Enter:
+            root.clicked();
+            event.accepted = true;
+            break;
+        }
+    }
+
+    function edgeRow(first) {
+        const siblings = parent?.visibleChildren;
+        if (!siblings)
+            return root;
+        let last = null;
+        for (let i = 0; i < siblings.length; i++) {
+            const sibling = siblings[i];
+            if (sibling.isSettingsRow !== true)
+                continue;
+            if (first)
+                return sibling;
+            last = sibling;
+        }
+        return last;
+    }
+
+    width: parent?.width ?? 0
+    height: implicitHeight
+    implicitHeight: paddingV * 2 + headerLine.height + (hasBody ? bodySlot.height + (headerLine.height > 0 ? Theme.spacingM : 0) : 0)
+
+    Rectangle {
+        anchors.fill: parent
+        color: root.rowColor
+        topLeftRadius: root.topRadius
+        topRightRadius: root.topRadius
+        bottomLeftRadius: root.bottomRadius
+        bottomRightRadius: root.bottomRadius
+    }
+
+    // Hover, press, ripple and tooltip come from the library's StateLayer, which
+    // reads control.hovered / pressed / pressX / pressY. Declared before
+    // clickControl so it never paints over the text.
+    StateLayer {
+        control: clickControl
+        disabled: !root.enabled || !root.clickable
+        stateColor: Theme.surfaceText
+        enableRipple: root.clickable
+        topLeftRadius: root.topRadius
+        topRightRadius: root.topRadius
+        bottomLeftRadius: root.bottomRadius
+        bottomRightRadius: root.bottomRadius
+        transitionDuration: SettingsMetrics.fadeDuration
+        transitionCurve: Theme.expressiveCurves.expressiveEffects
+        tooltipText: root.tooltipText
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: Theme.focusRingWidth / 2
+        topLeftRadius: Math.max(0, root.topRadius - Theme.focusRingWidth / 2)
+        topRightRadius: topLeftRadius
+        bottomLeftRadius: Math.max(0, root.bottomRadius - Theme.focusRingWidth / 2)
+        bottomRightRadius: bottomLeftRadius
+        color: "transparent"
+        border.width: Theme.focusRingWidth
+        border.color: Theme.focusRingColor
+        visible: root.visualFocus && root.clickable
+    }
+
+    StyledButton {
+        id: clickControl
+        anchors.fill: parent
+        enabled: root.clickable && root.enabled
+        hoverEnabled: root.clickable
+        focusPolicy: Qt.ClickFocus
+        background: null
+        Accessible.ignored: true
+        onClicked: root.clicked()
+
+        HoverHandler {
+            cursorShape: root.clickable ? Qt.PointingHandCursor : Qt.ArrowCursor
+        }
+    }
+
+    Column {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.topMargin: root.paddingV
+        anchors.leftMargin: root.paddingH
+        anchors.rightMargin: root.paddingH
+        spacing: Theme.spacingM
+
+        Item {
+            id: headerLine
+            visible: height > 0
+            width: parent.width
+            implicitHeight: Math.max(textColumn.implicitHeight, trailingArea.implicitHeight, leadingArea.visible ? leadingArea.implicitHeight : 0)
+            height: Math.max(implicitHeight, (root.hasText || trailingSlot.children.length > 0 ? root.minHeight : 0) - root.paddingV * 2)
+
+            Row {
+                id: leadingArea
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Theme.spacingL
+                visible: leadingSlot.children.length > 0 || root.iconName !== ""
+                opacity: root.enabled ? 1 : SettingsMetrics.disabledOpacity
+
+                Row {
+                    id: leadingSlot
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Theme.spacingS
+                    visible: children.length > 0
+                }
+
+                DIcon {
+                    id: leadingIcon
+                    anchors.verticalCenter: parent.verticalCenter
+                    name: root.iconName
+                    size: Theme.iconSize
+                    color: root.iconColor
+                    visible: root.iconName !== ""
+                }
+            }
+
+            Column {
+                id: textColumn
+                anchors.left: leadingArea.visible ? leadingArea.right : parent.left
+                anchors.leftMargin: leadingArea.visible ? Theme.spacingL : 0
+                anchors.right: trailingArea.visible ? trailingArea.left : parent.right
+                anchors.rightMargin: trailingArea.visible ? SettingsMetrics.rowContentSpacing : 0
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Theme.spacingXXS
+                opacity: root.enabled ? 1 : SettingsMetrics.disabledOpacity
+                visible: root.hasText
+
+                StyledText {
+                    width: parent.width
+                    text: root.title
+                    font.pixelSize: Theme.fontSizeMedium
+                    font.weight: Theme.fontWeightMedium
+                    color: root.titleColor
+                    wrapMode: Text.WordWrap
+                    visible: root.title !== ""
+                    horizontalAlignment: Text.AlignLeft
+                }
+
+                StyledText {
+                    width: parent.width
+                    text: root.subtitle
+                    font.pixelSize: Theme.fontSizeSmall
+                    color: root.subtitleColor
+                    wrapMode: Text.WordWrap
+                    visible: root.subtitle !== ""
+                    horizontalAlignment: Text.AlignLeft
+                }
+            }
+
+            Row {
+                id: trailingArea
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Theme.spacingS
+                visible: trailingSlot.children.length > 0 || root.showChevron || root.trailingBadge !== ""
+
+                Row {
+                    id: trailingSlot
+                    spacing: Theme.spacingS
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                StyledText {
+                    text: root.trailingBadge
+                    font.pixelSize: Theme.fontSizeSmall
+                    color: root.trailingBadgeColor
+                    visible: root.trailingBadge !== ""
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                DIcon {
+                    name: "chevron_right"
+                    size: Theme.iconSize
+                    color: Theme.surfaceVariantText
+                    rotation: I18n.isRtl ? 180 : 0
+                    visible: root.showChevron
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+        }
+
+        Column {
+            id: bodySlot
+            width: parent.width
+            spacing: Theme.spacingM
+        }
+    }
+}

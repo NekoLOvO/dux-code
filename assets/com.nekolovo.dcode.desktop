@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Dux Code
+GenericName=Coding Agent
+Comment=Native coding agent for the Dux Shell desktop
+Exec=dcode ui
+Icon=com.nekolovo.dcode
+Terminal=false
+Categories=Development;Qt;
+Keywords=code;agent;llm;chat;
+StartupNotify=true
+StartupWMClass=com.nekolovo.dcode

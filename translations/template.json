@@ -1,0 +1,2132 @@
+[
+  {
+    "term": " · %1 tools",
+    "translation": "",
+    "context": "skills row suffix listing allowed tool count"
+  },
+  {
+    "term": "%1 added",
+    "translation": "",
+    "context": "template row badge with how many instances already exist"
+  },
+  {
+    "term": "%1 matches",
+    "translation": "",
+    "context": "search modal result count | settings sidebar tab while searching: result count"
+  },
+  {
+    "term": "%1 models",
+    "translation": "",
+    "context": "model count when the list came from settings"
+  },
+  {
+    "term": "%1 models enabled",
+    "translation": "",
+    "context": "provider row subtitle listing how many models are on"
+  },
+  {
+    "term": "%1 models found",
+    "translation": "",
+    "context": "model count after fetching"
+  },
+  {
+    "term": "%1 more waiting",
+    "translation": "",
+    "context": "permission dialog queued count | system notification text"
+  },
+  {
+    "term": "%1 · failed",
+    "translation": "",
+    "context": "system notification text"
+  },
+  {
+    "term": "1 match",
+    "translation": "",
+    "context": "settings sidebar tab while searching: one result"
+  },
+  {
+    "term": "50 matches Material. Lower is squarer, higher is rounder.",
+    "translation": "",
+    "context": "radius strength slider description"
+  },
+  {
+    "term": "<a href=\"%2\" style=\"text-decoration:none; color:%1;\">MIT License</a>",
+    "translation": "",
+    "context": "about page license footer link, %2 is the license url"
+  },
+  {
+    "term": "A hard cap: anything past it is cut mid-sentence and marked truncated.",
+    "translation": "",
+    "context": "max output tokens dropdown description"
+  },
+  {
+    "term": "A skill is a folder with a SKILL.md the agent loads on demand, under ~/.agents/skills.",
+    "translation": "",
+    "context": "skills empty state description"
+  },
+  {
+    "term": "A skill is a folder with a SKILL.md the agent loads on demand. Put it under %1.",
+    "translation": "",
+    "context": "skills empty state description"
+  },
+  {
+    "term": "A task is a prompt that runs on a schedule. Each run gets its own conversation, so you can read what it did — or keep asking.",
+    "translation": "",
+    "context": "task modal intro"
+  },
+  {
+    "term": "A task needs a prompt to run.",
+    "translation": "",
+    "context": "task form error when the prompt is empty"
+  },
+  {
+    "term": "API",
+    "translation": "",
+    "context": "about page daemon api version column label"
+  },
+  {
+    "term": "API endpoint",
+    "translation": "",
+    "context": "provider setup endpoint field label"
+  },
+  {
+    "term": "API key",
+    "translation": "",
+    "context": "provider setup key field label | search key field label"
+  },
+  {
+    "term": "API key not set",
+    "translation": "",
+    "context": "search row subtitle when no key is stored"
+  },
+  {
+    "term": "API key — leave empty to keep the saved one",
+    "translation": "",
+    "context": "provider setup key label when a key is stored | search key label when a key is stored"
+  },
+  {
+    "term": "About",
+    "translation": "",
+    "context": "settings sidebar tab label"
+  },
+  {
+    "term": "Add",
+    "translation": "",
+    "context": "mcp add button | search backend add button"
+  },
+  {
+    "term": "Add MCP server",
+    "translation": "",
+    "context": "add mcp server button | mcp modal window title"
+  },
+  {
+    "term": "Add provider",
+    "translation": "",
+    "context": "add provider button on providers page | provider add modal window title | save button when adding a provider"
+  },
+  {
+    "term": "Add search backend",
+    "translation": "",
+    "context": "add search backend button on web search page | search backend modal window title"
+  },
+  {
+    "term": "Added",
+    "translation": "",
+    "context": "search backend badge when this kind already exists | template row badge when the provider already exists"
+  },
+  {
+    "term": "Agent",
+    "translation": "",
+    "context": "agent notification toggle label | general settings section label"
+  },
+  {
+    "term": "Alerts and sounds",
+    "translation": "",
+    "context": "settings sidebar tab hint"
+  },
+  {
+    "term": "Allow",
+    "translation": "",
+    "context": "permission dialog allow button"
+  },
+  {
+    "term": "Always use the dark theme.",
+    "translation": "",
+    "context": "theme mode setting description"
+  },
+  {
+    "term": "Always use the light theme.",
+    "translation": "",
+    "context": "theme mode setting description"
+  },
+  {
+    "term": "An MCP server offers tools over stdio or streamable HTTP. Dux Code connects to it and hands its tools to the model. A local server runs as you do, outside the workspace sandbox.",
+    "translation": "",
+    "context": "mcp form intro"
+  },
+  {
+    "term": "App",
+    "translation": "",
+    "context": "general settings section label"
+  },
+  {
+    "term": "Appearance",
+    "translation": "",
+    "context": "appearance settings section header | settings sidebar tab label"
+  },
+  {
+    "term": "Application and agent defaults",
+    "translation": "",
+    "context": "settings sidebar tab hint"
+  },
+  {
+    "term": "Application behavior and agent defaults.",
+    "translation": "",
+    "context": "general settings section subtitle"
+  },
+  {
+    "term": "Apply and restart",
+    "translation": "",
+    "context": "interface zoom restart button"
+  },
+  {
+    "term": "Arguments",
+    "translation": "",
+    "context": "mcp form args field label"
+  },
+  {
+    "term": "Ask, search, or brainstorm…",
+    "translation": "",
+    "context": "expanded composer placeholder"
+  },
+  {
+    "term": "Ask, search, or brainstorm…   Shift+Enter for a new line",
+    "translation": "",
+    "context": "composer placeholder with shortcut hint"
+  },
+  {
+    "term": "Assistant",
+    "translation": "",
+    "context": "search result: the message is from the model"
+  },
+  {
+    "term": "Attach files",
+    "translation": "",
+    "context": "attachment picker window title | composer button that opens the file picker"
+  },
+  {
+    "term": "Auto",
+    "translation": "",
+    "context": "color source button group option following DMS | display mode option: auto for the thinking block | display mode option: auto for tool cards | font source button group option following DMS | reasoning level: let the provider decide | theme mode button group option"
+  },
+  {
+    "term": "Auto opens a card while the tool runs and folds it when it finishes.",
+    "translation": "",
+    "context": "tool display mode button group description"
+  },
+  {
+    "term": "Auto opens the block while reasoning and folds it when the answer starts.",
+    "translation": "",
+    "context": "thinking display mode button group description"
+  },
+  {
+    "term": "Auto-approve tool calls",
+    "translation": "",
+    "context": "approval mode button group label"
+  },
+  {
+    "term": "Auto-approve tools",
+    "translation": "",
+    "context": "task form toggle label"
+  },
+  {
+    "term": "Auto-expand the thinking block",
+    "translation": "",
+    "context": "thinking display mode button group label"
+  },
+  {
+    "term": "Auto-expand tool calls",
+    "translation": "",
+    "context": "tool display mode button group label"
+  },
+  {
+    "term": "Available once the daemon is running.",
+    "translation": "",
+    "context": "autostart setting description when the backend is offline"
+  },
+  {
+    "term": "Available skills",
+    "translation": "",
+    "context": "extensions settings section label"
+  },
+  {
+    "term": "Back",
+    "translation": "",
+    "context": "back button in provider setup | back button in search setup"
+  },
+  {
+    "term": "Backend",
+    "translation": "",
+    "context": "about page daemon section header"
+  },
+  {
+    "term": "Backend not connected.",
+    "translation": "",
+    "context": "interface zoom pending restart description when backend is unavailable"
+  },
+  {
+    "term": "Backends for web_search. web_fetch needs none of them. Keys stay here.",
+    "translation": "",
+    "context": "web search settings section subtitle"
+  },
+  {
+    "term": "Background blur",
+    "translation": "",
+    "context": "toggle asking the compositor to blur behind see-through windows"
+  },
+  {
+    "term": "Balanced",
+    "translation": "",
+    "context": "spring bounce option"
+  },
+  {
+    "term": "Blurs what shows through the window. Needs a compositor that supports background blur.",
+    "translation": "",
+    "context": "background blur toggle description"
+  },
+  {
+    "term": "Branch",
+    "translation": "",
+    "context": "message action: branch the conversation here"
+  },
+  {
+    "term": "Branch created",
+    "translation": "",
+    "context": "branch created toast"
+  },
+  {
+    "term": "Browser action",
+    "translation": "",
+    "context": "permission dialog browser kind label"
+  },
+  {
+    "term": "Built-in tools",
+    "translation": "",
+    "context": "extensions settings section label"
+  },
+  {
+    "term": "Cancel",
+    "translation": "",
+    "context": "confirm dialog button to cancel | edit dialog cancel button | expanded editor cancel button | rename dialog cancel button | task form cancel button"
+  },
+  {
+    "term": "Cancelled",
+    "translation": "",
+    "context": "streaming status, run was cancelled"
+  },
+  {
+    "term": "Cancelled %1",
+    "translation": "",
+    "context": "task row when the last run was cancelled"
+  },
+  {
+    "term": "Capabilities",
+    "translation": "",
+    "context": "about page daemon capabilities label"
+  },
+  {
+    "term": "Change the endpoint, replace the key, or fetch the model list again.",
+    "translation": "",
+    "context": "provider setup instructions when editing"
+  },
+  {
+    "term": "Choose",
+    "translation": "",
+    "context": "browser binary choose button"
+  },
+  {
+    "term": "Choose a JSON color theme file.",
+    "translation": "",
+    "context": "custom theme hint when none selected"
+  },
+  {
+    "term": "Choose a backend",
+    "translation": "",
+    "context": "heading for search backend picker"
+  },
+  {
+    "term": "Choose a provider",
+    "translation": "",
+    "context": "heading for provider selection list"
+  },
+  {
+    "term": "Choose when to receive system notifications and play sounds.",
+    "translation": "",
+    "context": "notifications settings section subtitle"
+  },
+  {
+    "term": "Choose working directory",
+    "translation": "",
+    "context": "working directory picker window title"
+  },
+  {
+    "term": "Close behavior",
+    "translation": "",
+    "context": "close behavior setting label"
+  },
+  {
+    "term": "Closing hides the window; reopen it from your app launcher.",
+    "translation": "",
+    "context": "tray icon toggle warning when closing only minimizes"
+  },
+  {
+    "term": "Code",
+    "translation": "",
+    "context": "about page hero, app name"
+  },
+  {
+    "term": "Color",
+    "translation": "",
+    "context": "focus ring color setting label"
+  },
+  {
+    "term": "Color source",
+    "translation": "",
+    "context": "color source setting label"
+  },
+  {
+    "term": "Comfortable",
+    "translation": "",
+    "context": "interface density option with the default spacing"
+  },
+  {
+    "term": "Command",
+    "translation": "",
+    "context": "mcp form command field label"
+  },
+  {
+    "term": "Community",
+    "translation": "",
+    "context": "about page card title, chat and community links"
+  },
+  {
+    "term": "Compact",
+    "translation": "",
+    "context": "interface density option fitting the most items on screen"
+  },
+  {
+    "term": "Compose",
+    "translation": "",
+    "context": "expanded editor dialog title"
+  },
+  {
+    "term": "Compress history above",
+    "translation": "",
+    "context": "context compaction threshold dropdown label"
+  },
+  {
+    "term": "Confirm",
+    "translation": "",
+    "context": "confirm dialog default confirm button"
+  },
+  {
+    "term": "Connected",
+    "translation": "",
+    "context": "about page daemon status value"
+  },
+  {
+    "term": "Connected · %1 results · %2 ms",
+    "translation": "",
+    "context": "search test success message"
+  },
+  {
+    "term": "Context",
+    "translation": "",
+    "context": "general settings section label"
+  },
+  {
+    "term": "Continue",
+    "translation": "",
+    "context": "button under a truncated reply that asks the model to keep going | message sent when the user asks a truncated reply to keep going"
+  },
+  {
+    "term": "Copied",
+    "translation": "",
+    "context": "toast after copying a prompt"
+  },
+  {
+    "term": "Copy",
+    "translation": "",
+    "context": "message action: copy this prompt | message action: copy this reply"
+  },
+  {
+    "term": "Copy the reasoning",
+    "translation": "",
+    "context": "message action: copy the thinking block"
+  },
+  {
+    "term": "Copy the tool output",
+    "translation": "",
+    "context": "message action: copy the tool card"
+  },
+  {
+    "term": "Copy this block",
+    "translation": "",
+    "context": "message action: copy one paragraph"
+  },
+  {
+    "term": "Could not create the branch",
+    "translation": "",
+    "context": "branch creation failed"
+  },
+  {
+    "term": "Could not read that file — expected a JSON color theme.",
+    "translation": "",
+    "context": "custom theme error when file is invalid"
+  },
+  {
+    "term": "Custom",
+    "translation": "",
+    "context": "color source button group option for a custom theme file | font source button group option for app-chosen fonts"
+  },
+  {
+    "term": "Dark",
+    "translation": "",
+    "context": "theme mode button group option"
+  },
+  {
+    "term": "Decrease",
+    "translation": "",
+    "context": "slider row step down button"
+  },
+  {
+    "term": "Default",
+    "translation": "",
+    "context": "font family dropdown option for the bundled font"
+  },
+  {
+    "term": "Delete",
+    "translation": "",
+    "context": "session context menu action, delete the conversation | task form delete button"
+  },
+  {
+    "term": "Dense",
+    "translation": "",
+    "context": "interface density option denser than compact for small text and tight rows"
+  },
+  {
+    "term": "Density",
+    "translation": "",
+    "context": "appearance settings section label"
+  },
+  {
+    "term": "Deny",
+    "translation": "",
+    "context": "permission dialog deny button"
+  },
+  {
+    "term": "Display family",
+    "translation": "",
+    "context": "display font family dropdown label"
+  },
+  {
+    "term": "Do not ask before each tool call",
+    "translation": "",
+    "context": "mcp auto approve label"
+  },
+  {
+    "term": "Docs",
+    "translation": "",
+    "context": "about page resource button"
+  },
+  {
+    "term": "Done",
+    "translation": "",
+    "context": "tool card badge when finished"
+  },
+  {
+    "term": "Duration",
+    "translation": "",
+    "context": "animation duration slider label"
+  },
+  {
+    "term": "Dux Code cannot tell what a server will do. Only turn this on if you trust it.",
+    "translation": "",
+    "context": "mcp auto approve description"
+  },
+  {
+    "term": "Dux Code is a native coding agent for the <a href=\"%2\" style=\"text-decoration:none; color:%1;\">Dux Shell</a> desktop. The model is driven straight from a Go daemon over a Unix socket and everything is drawn with <a href=\"%3\" style=\"text-decoration:none; color:%1;\">Quickshell</a> — no webview, no Electron.",
+    "translation": "",
+    "context": "about page project description with embedded links, %1 is the accent color, %2 is the Dux Shell url, %3 is the Quickshell url"
+  },
+  {
+    "term": "Dux Code will close and reopen with the new zoom.",
+    "translation": "",
+    "context": "interface zoom pending restart description"
+  },
+  {
+    "term": "Dux Shell has no font settings to follow, using %1.",
+    "translation": "",
+    "context": "auto font source status when Dux Shell publishes no typography"
+  },
+  {
+    "term": "Dux Shell not detected — using the %1 preset.",
+    "translation": "",
+    "context": "auto color source status when DMS is missing"
+  },
+  {
+    "term": "Earlier",
+    "translation": "",
+    "context": "sidebar session group"
+  },
+  {
+    "term": "Edit",
+    "translation": "",
+    "context": "message action: edit this prompt"
+  },
+  {
+    "term": "Edit MCP server",
+    "translation": "",
+    "context": "mcp modal window title when editing"
+  },
+  {
+    "term": "Edit message",
+    "translation": "",
+    "context": "dialog title for editing an earlier prompt"
+  },
+  {
+    "term": "Enabled",
+    "translation": "",
+    "context": "mcp enabled label | task form enabled label"
+  },
+  {
+    "term": "Enter the endpoint first.",
+    "translation": "",
+    "context": "provider setup error when the endpoint field is empty"
+  },
+  {
+    "term": "Environment: %1 (values stay in config.json)",
+    "translation": "",
+    "context": "mcp form env keys hint"
+  },
+  {
+    "term": "Errors",
+    "translation": "",
+    "context": "error notification toggle label"
+  },
+  {
+    "term": "Every %1 at %2",
+    "translation": "",
+    "context": "task schedule: weekly on a weekday"
+  },
+  {
+    "term": "Every %1 minutes",
+    "translation": "",
+    "context": "task schedule: fixed interval in minutes"
+  },
+  {
+    "term": "Every N minutes",
+    "translation": "",
+    "context": "task schedule kind: fixed interval"
+  },
+  {
+    "term": "Every day",
+    "translation": "",
+    "context": "task schedule kind: daily"
+  },
+  {
+    "term": "Every day at %1",
+    "translation": "",
+    "context": "task schedule: daily at a time"
+  },
+  {
+    "term": "Every week",
+    "translation": "",
+    "context": "task schedule kind: weekly"
+  },
+  {
+    "term": "Everything above this line stays in your transcript but is no longer sent to the model.",
+    "translation": "",
+    "context": "compaction seam: explanation shown under the summary"
+  },
+  {
+    "term": "Expand editor",
+    "translation": "",
+    "context": "composer button that opens the full screen editor"
+  },
+  {
+    "term": "Export",
+    "translation": "",
+    "context": "session context menu action, export the conversation"
+  },
+  {
+    "term": "Export failed.",
+    "translation": "",
+    "context": "toast when exporting a session fails"
+  },
+  {
+    "term": "Exported to %1",
+    "translation": "",
+    "context": "toast after exporting a session, %1 is the file path"
+  },
+  {
+    "term": "Extensions",
+    "translation": "",
+    "context": "extensions settings section header | settings sidebar tab label"
+  },
+  {
+    "term": "Extra high",
+    "translation": "",
+    "context": "reasoning level: extra high"
+  },
+  {
+    "term": "Failed %1",
+    "translation": "",
+    "context": "task row when the last run failed"
+  },
+  {
+    "term": "Failed to regenerate",
+    "translation": "",
+    "context": "toast when chat.regenerate fails"
+  },
+  {
+    "term": "Failed to send",
+    "translation": "",
+    "context": "toast when chat.send fails"
+  },
+  {
+    "term": "Failed to start: %1",
+    "translation": "",
+    "context": "mcp row subtitle when startup failed"
+  },
+  {
+    "term": "Family",
+    "translation": "",
+    "context": "font family dropdown label"
+  },
+  {
+    "term": "Fetch models",
+    "translation": "",
+    "context": "fetch button"
+  },
+  {
+    "term": "Fetching…",
+    "translation": "",
+    "context": "fetch button while loading"
+  },
+  {
+    "term": "File access",
+    "translation": "",
+    "context": "file access tool toggle label"
+  },
+  {
+    "term": "Focus ring",
+    "translation": "",
+    "context": "appearance settings section label | focus ring toggle label"
+  },
+  {
+    "term": "Follow Dux Shell colors, falling back to a preset.",
+    "translation": "",
+    "context": "color source description for auto"
+  },
+  {
+    "term": "Follow colors generated by Matugen.",
+    "translation": "",
+    "context": "color source description for Matugen"
+  },
+  {
+    "term": "Following the system color scheme (currently %1).",
+    "translation": "",
+    "context": "theme mode setting description"
+  },
+  {
+    "term": "Font scale",
+    "translation": "",
+    "context": "font scale slider label"
+  },
+  {
+    "term": "Font source",
+    "translation": "",
+    "context": "font source setting label"
+  },
+  {
+    "term": "Foreground layers",
+    "translation": "",
+    "context": "toggle keeping cards and panes solid over a see-through window"
+  },
+  {
+    "term": "Friday",
+    "translation": "",
+    "context": "weekday name"
+  },
+  {
+    "term": "General",
+    "translation": "",
+    "context": "general settings section header | settings sidebar tab label"
+  },
+  {
+    "term": "GitHub",
+    "translation": "",
+    "context": "about page resource button"
+  },
+  {
+    "term": "Give the task a name.",
+    "translation": "",
+    "context": "task form error when the name is empty"
+  },
+  {
+    "term": "Give this endpoint a name — you can add more than one.",
+    "translation": "",
+    "context": "provider setup error when the name field is empty for a multi-instance provider"
+  },
+  {
+    "term": "Hide",
+    "translation": "",
+    "context": "question dialog button that puts the question aside without answering"
+  },
+  {
+    "term": "High",
+    "translation": "",
+    "context": "reasoning level: high"
+  },
+  {
+    "term": "How much room list rows and settings rows get.",
+    "translation": "",
+    "context": "interface density setting description"
+  },
+  {
+    "term": "In use",
+    "translation": "",
+    "context": "search row badge for the backend the agent uses"
+  },
+  {
+    "term": "Increase",
+    "translation": "",
+    "context": "slider row step up button"
+  },
+  {
+    "term": "Inside the working directory",
+    "translation": "",
+    "context": "approval mode option: auto approve inside the working directory"
+  },
+  {
+    "term": "Instance URL",
+    "translation": "",
+    "context": "search backend instance url field label"
+  },
+  {
+    "term": "Interface density",
+    "translation": "",
+    "context": "interface density setting label"
+  },
+  {
+    "term": "Interface scale",
+    "translation": "",
+    "context": "interface zoom slider label"
+  },
+  {
+    "term": "Its models disappear from the picker. Nothing is deleted on the provider side.",
+    "translation": "",
+    "context": "remove provider confirmation message"
+  },
+  {
+    "term": "Its tools disappear from the agent. The command and environment are not touched.",
+    "translation": "",
+    "context": "remove mcp server confirmation message"
+  },
+  {
+    "term": "Keeps cards and panes solid when the window is see-through.",
+    "translation": "",
+    "context": "foreground layers toggle description"
+  },
+  {
+    "term": "Key set",
+    "translation": "",
+    "context": "provider row badge when the key is stored in the config file | search row subtitle when a key is stored"
+  },
+  {
+    "term": "Keys are stored in the config file on this machine.",
+    "translation": "",
+    "context": "subtitle under provider selection heading"
+  },
+  {
+    "term": "Keys are stored in the config file on this machine. Nothing is shared.",
+    "translation": "",
+    "context": "subtitle under search backend picker"
+  },
+  {
+    "term": "Language",
+    "translation": "",
+    "context": "general settings section label | interface language setting label"
+  },
+  {
+    "term": "Language of the interface.",
+    "translation": "",
+    "context": "interface language setting description"
+  },
+  {
+    "term": "Launch Dux Code in the background when you log in.",
+    "translation": "",
+    "context": "autostart setting description"
+  },
+  {
+    "term": "Layer opacity",
+    "translation": "",
+    "context": "foreground layer opacity slider label"
+  },
+  {
+    "term": "Lets the desktop show through the window. Text and controls stay solid.",
+    "translation": "",
+    "context": "window opacity slider description"
+  },
+  {
+    "term": "Light",
+    "translation": "",
+    "context": "theme mode button group option"
+  },
+  {
+    "term": "Load colors from your own theme file.",
+    "translation": "",
+    "context": "color source description for custom"
+  },
+  {
+    "term": "Loading…",
+    "translation": "",
+    "context": "skills list loading state"
+  },
+  {
+    "term": "Local",
+    "translation": "",
+    "context": "provider row badge for a self-hosted endpoint | provider status badge for a self-hosted endpoint without a key"
+  },
+  {
+    "term": "Low",
+    "translation": "",
+    "context": "reasoning level: low"
+  },
+  {
+    "term": "MCP server added",
+    "translation": "",
+    "context": "toast after adding an mcp server"
+  },
+  {
+    "term": "MCP servers",
+    "translation": "",
+    "context": "extensions settings section label"
+  },
+  {
+    "term": "MCP tool",
+    "translation": "",
+    "context": "permission dialog mcp kind label"
+  },
+  {
+    "term": "Manual only",
+    "translation": "",
+    "context": "task schedule: never runs on its own"
+  },
+  {
+    "term": "Matugen",
+    "translation": "",
+    "context": "color source button group option for Matugen"
+  },
+  {
+    "term": "Matugen theme missing or invalid — using the %1 preset.",
+    "translation": "",
+    "context": "Matugen color source fallback status"
+  },
+  {
+    "term": "Max",
+    "translation": "",
+    "context": "reasoning level: max"
+  },
+  {
+    "term": "Max output per reply",
+    "translation": "",
+    "context": "max output tokens dropdown label"
+  },
+  {
+    "term": "Medium",
+    "translation": "",
+    "context": "reasoning level: medium"
+  },
+  {
+    "term": "Menu",
+    "translation": "",
+    "context": "settings header button that shows the section list on narrow windows"
+  },
+  {
+    "term": "Minimal",
+    "translation": "",
+    "context": "reasoning level: minimal"
+  },
+  {
+    "term": "Minimize",
+    "translation": "",
+    "context": "close behavior button group option to hide to tray"
+  },
+  {
+    "term": "Minutes",
+    "translation": "",
+    "context": "task form interval label"
+  },
+  {
+    "term": "Model",
+    "translation": "",
+    "context": "task form model label"
+  },
+  {
+    "term": "Model Context Protocol servers give the agent extra tools.",
+    "translation": "",
+    "context": "mcp empty state description"
+  },
+  {
+    "term": "Models",
+    "translation": "",
+    "context": "provider setup model list heading"
+  },
+  {
+    "term": "Models and API keys",
+    "translation": "",
+    "context": "settings sidebar tab hint"
+  },
+  {
+    "term": "Modify file",
+    "translation": "",
+    "context": "permission dialog write kind label"
+  },
+  {
+    "term": "Monday",
+    "translation": "",
+    "context": "weekday name"
+  },
+  {
+    "term": "Monospace family",
+    "translation": "",
+    "context": "monospace font family dropdown label"
+  },
+  {
+    "term": "Morning digest",
+    "translation": "",
+    "context": "task form name placeholder"
+  },
+  {
+    "term": "Motion",
+    "translation": "",
+    "context": "appearance settings section label"
+  },
+  {
+    "term": "Name",
+    "translation": "",
+    "context": "provider setup name field label | rename session dialog field label | task form name label"
+  },
+  {
+    "term": "Name (optional)",
+    "translation": "",
+    "context": "mcp form name field label"
+  },
+  {
+    "term": "Native coding agent for the shell",
+    "translation": "",
+    "context": "empty state tagline"
+  },
+  {
+    "term": "Needs an opacity below 100%.",
+    "translation": "",
+    "context": "background blur toggle description when the window is opaque"
+  },
+  {
+    "term": "Never run",
+    "translation": "",
+    "context": "task row when the task has never executed"
+  },
+  {
+    "term": "New session",
+    "translation": "",
+    "context": "sidebar primary button | sidebar session title when nothing is selected | system notification text"
+  },
+  {
+    "term": "New task",
+    "translation": "",
+    "context": "task modal new button"
+  },
+  {
+    "term": "No backend yet. SearXNG needs an instance URL; Brave and Tavily need a key.",
+    "translation": "",
+    "context": "web search empty state"
+  },
+  {
+    "term": "No key",
+    "translation": "",
+    "context": "provider row badge when no API key is configured | provider status badge when no API key is configured"
+  },
+  {
+    "term": "No matches",
+    "translation": "",
+    "context": "search modal when nothing was found"
+  },
+  {
+    "term": "No providers yet. Add one to get started.",
+    "translation": "",
+    "context": "providers page empty state"
+  },
+  {
+    "term": "No servers configured",
+    "translation": "",
+    "context": "mcp empty state title"
+  },
+  {
+    "term": "No sessions yet",
+    "translation": "",
+    "context": "sidebar placeholder when the session list is empty"
+  },
+  {
+    "term": "No skills installed",
+    "translation": "",
+    "context": "skills empty state title"
+  },
+  {
+    "term": "No tasks yet",
+    "translation": "",
+    "context": "task modal empty state"
+  },
+  {
+    "term": "No theme file selected",
+    "translation": "",
+    "context": "custom theme empty state title"
+  },
+  {
+    "term": "Not supported yet",
+    "translation": "",
+    "context": "provider row badge for a provider type the client cannot talk to"
+  },
+  {
+    "term": "Nothing matches \"%1\".",
+    "translation": "",
+    "context": "settings search empty state"
+  },
+  {
+    "term": "Notifications",
+    "translation": "",
+    "context": "notifications settings section header | settings sidebar tab label"
+  },
+  {
+    "term": "Off",
+    "translation": "",
+    "context": "animation duration slider label at zero | approval mode option: always ask | context compaction disabled option | display mode option: thinking block always collapsed | display mode option: tool cards always collapsed | max output tokens option, meaning no cap | max tool steps option, meaning no cap | reasoning level: disabled | web access toggle state"
+  },
+  {
+    "term": "Off keeps the task but stops it from running on its own.",
+    "translation": "",
+    "context": "task form enabled description"
+  },
+  {
+    "term": "Off lets the compositor draw window decorations.",
+    "translation": "",
+    "context": "window title bars toggle description"
+  },
+  {
+    "term": "Offline",
+    "translation": "",
+    "context": "about page daemon status value"
+  },
+  {
+    "term": "Older history becomes a summary past this size. Your transcript keeps everything.",
+    "translation": "",
+    "context": "context compaction threshold dropdown description"
+  },
+  {
+    "term": "On",
+    "translation": "",
+    "context": "approval mode option: approve everything | display mode option: thinking block always expanded | display mode option: tool cards always expanded | web access toggle state"
+  },
+  {
+    "term": "Opacity",
+    "translation": "",
+    "context": "window opacity slider label"
+  },
+  {
+    "term": "Open Dux Code",
+    "translation": "",
+    "context": "tray menu item to show the main window"
+  },
+  {
+    "term": "Optional — empty uses the daemon default",
+    "translation": "",
+    "context": "task form working directory hint"
+  },
+  {
+    "term": "Or type your own answer",
+    "translation": "",
+    "context": "question dialog free text placeholder"
+  },
+  {
+    "term": "Outline",
+    "translation": "",
+    "context": "focus ring color option"
+  },
+  {
+    "term": "Outline the control that has keyboard focus.",
+    "translation": "",
+    "context": "focus ring toggle description"
+  },
+  {
+    "term": "Palette: %1",
+    "translation": "",
+    "context": "selected preset palette name"
+  },
+  {
+    "term": "Paste an API key, then fetch the model list. Turn on the models you want in the picker.",
+    "translation": "",
+    "context": "provider setup instructions when adding"
+  },
+  {
+    "term": "Paused",
+    "translation": "",
+    "context": "task row when the task is disabled"
+  },
+  {
+    "term": "Permission needed",
+    "translation": "",
+    "context": "system notification text"
+  },
+  {
+    "term": "Permissions",
+    "translation": "",
+    "context": "permission notification toggle label"
+  },
+  {
+    "term": "Pick a color source, palette, or your own theme file.",
+    "translation": "",
+    "context": "appearance settings section subtitle"
+  },
+  {
+    "term": "Pick a command to run, or enter a server URL.",
+    "translation": "",
+    "context": "mcp form error when neither command nor url is filled"
+  },
+  {
+    "term": "Pin",
+    "translation": "",
+    "context": "session context menu action, pin to the top"
+  },
+  {
+    "term": "Pinned",
+    "translation": "",
+    "context": "sidebar session group"
+  },
+  {
+    "term": "Play a sound along with system notifications.",
+    "translation": "",
+    "context": "notification sound toggle description"
+  },
+  {
+    "term": "Playful",
+    "translation": "",
+    "context": "spring bounce option"
+  },
+  {
+    "term": "Preset",
+    "translation": "",
+    "context": "color source button group option for bundled palettes"
+  },
+  {
+    "term": "Primary",
+    "translation": "",
+    "context": "focus ring color option"
+  },
+  {
+    "term": "Provider added",
+    "translation": "",
+    "context": "toast after adding a provider"
+  },
+  {
+    "term": "Providers",
+    "translation": "",
+    "context": "providers settings section header | settings sidebar tab label"
+  },
+  {
+    "term": "Question",
+    "translation": "",
+    "context": "question dialog title"
+  },
+  {
+    "term": "Quit",
+    "translation": "",
+    "context": "close behavior button group option to quit the app | tray menu item to quit the application"
+  },
+  {
+    "term": "Radius strength",
+    "translation": "",
+    "context": "global component corner rounding"
+  },
+  {
+    "term": "Ran %1",
+    "translation": "",
+    "context": "task row when the last run succeeded"
+  },
+  {
+    "term": "Ran %1 steps",
+    "translation": "",
+    "context": "finished status with tool call count, %1 is the number"
+  },
+  {
+    "term": "Ran 1 step",
+    "translation": "",
+    "context": "finished status, exactly one tool call"
+  },
+  {
+    "term": "Reached the output limit (%1 tokens) — this reply was cut off.",
+    "translation": "",
+    "context": "note under a reply cut off by the output token cap, with the token count"
+  },
+  {
+    "term": "Reached the output limit — this reply was cut off.",
+    "translation": "",
+    "context": "note under a reply cut off by the output token cap"
+  },
+  {
+    "term": "Read and write files in the workspace. Off removes the file tools.",
+    "translation": "",
+    "context": "file access tool toggle description"
+  },
+  {
+    "term": "Reduce motion",
+    "translation": "",
+    "context": "reduce motion toggle label"
+  },
+  {
+    "term": "Refresh models",
+    "translation": "",
+    "context": "fetch button when a list is already shown"
+  },
+  {
+    "term": "Regenerate",
+    "translation": "",
+    "context": "message action: regenerate this reply"
+  },
+  {
+    "term": "Remote servers speak streamable HTTP, so nothing runs on this machine. Leave this empty to launch a local command instead.",
+    "translation": "",
+    "context": "mcp form url hint"
+  },
+  {
+    "term": "Remove",
+    "translation": "",
+    "context": "mcp row remove button tooltip | provider row remove button tooltip | remove mcp server confirmation button | remove provider confirmation button | remove search backend confirmation button | search row remove button tooltip"
+  },
+  {
+    "term": "Remove \"%1\"?",
+    "translation": "",
+    "context": "remove mcp server confirmation title | remove provider confirmation title | remove search backend confirmation title"
+  },
+  {
+    "term": "Rename",
+    "translation": "",
+    "context": "rename dialog confirm button | rename session dialog title | session context menu action"
+  },
+  {
+    "term": "Reply failed · %1",
+    "translation": "",
+    "context": "system notification text"
+  },
+  {
+    "term": "Reply finished.",
+    "translation": "",
+    "context": "system notification text"
+  },
+  {
+    "term": "Restart",
+    "translation": "",
+    "context": "mcp row restart button tooltip"
+  },
+  {
+    "term": "Restart required",
+    "translation": "",
+    "context": "interface zoom pending restart label"
+  },
+  {
+    "term": "Ripple effects",
+    "translation": "",
+    "context": "ripple effects toggle label"
+  },
+  {
+    "term": "Run shell commands. Off removes the bash tool.",
+    "translation": "",
+    "context": "shell tool toggle description"
+  },
+  {
+    "term": "Running · %1 tools",
+    "translation": "",
+    "context": "mcp row subtitle with tool count"
+  },
+  {
+    "term": "Running · 1 tool",
+    "translation": "",
+    "context": "mcp row subtitle with a single tool"
+  },
+  {
+    "term": "Running…",
+    "translation": "",
+    "context": "task row status while it is executing"
+  },
+  {
+    "term": "Saturday",
+    "translation": "",
+    "context": "weekday name"
+  },
+  {
+    "term": "Save",
+    "translation": "",
+    "context": "mcp save button when editing | save button when editing a provider | search backend save button when editing | task form save button"
+  },
+  {
+    "term": "Save & regenerate",
+    "translation": "",
+    "context": "edit dialog button that rewrites the prompt and re-runs the model"
+  },
+  {
+    "term": "Saved",
+    "translation": "",
+    "context": "provider status badge when the key comes from the config file | toast after saving an mcp server | toast after saving provider settings | toast after saving search backend"
+  },
+  {
+    "term": "Saving…",
+    "translation": "",
+    "context": "task form while saving"
+  },
+  {
+    "term": "Scales the whole app. Takes effect after a restart.",
+    "translation": "",
+    "context": "interface zoom slider description"
+  },
+  {
+    "term": "Schedule",
+    "translation": "",
+    "context": "task form schedule label"
+  },
+  {
+    "term": "Scheduled run finished.",
+    "translation": "",
+    "context": "system notification text"
+  },
+  {
+    "term": "Scheduled task",
+    "translation": "",
+    "context": "system notification text"
+  },
+  {
+    "term": "Scroll to top",
+    "translation": "",
+    "context": "toolbar button that jumps the conversation back to the top"
+  },
+  {
+    "term": "Search",
+    "translation": "",
+    "context": "search modal window title | sidebar nav: search"
+  },
+  {
+    "term": "Search all conversations",
+    "translation": "",
+    "context": "search modal field placeholder"
+  },
+  {
+    "term": "Search backend added",
+    "translation": "",
+    "context": "toast after adding search backend"
+  },
+  {
+    "term": "Search backends",
+    "translation": "",
+    "context": "settings sidebar tab hint"
+  },
+  {
+    "term": "Search failed",
+    "translation": "",
+    "context": "search modal error"
+  },
+  {
+    "term": "Search results",
+    "translation": "",
+    "context": "settings page header while a search query is typed"
+  },
+  {
+    "term": "Search settings",
+    "translation": "",
+    "context": "placeholder in the settings search field"
+  },
+  {
+    "term": "Searching…",
+    "translation": "",
+    "context": "search modal while a query is in flight"
+  },
+  {
+    "term": "Secondary",
+    "translation": "",
+    "context": "focus ring color option"
+  },
+  {
+    "term": "Select agent-browser",
+    "translation": "",
+    "context": "browser binary picker title"
+  },
+  {
+    "term": "Select theme file",
+    "translation": "",
+    "context": "custom theme file picker title"
+  },
+  {
+    "term": "Send",
+    "translation": "",
+    "context": "expanded editor send button | question dialog send button"
+  },
+  {
+    "term": "Separate arguments with spaces. Wrap one in double quotes if it contains spaces.",
+    "translation": "",
+    "context": "mcp form args hint"
+  },
+  {
+    "term": "Server URL (remote)",
+    "translation": "",
+    "context": "mcp form url field label"
+  },
+  {
+    "term": "Sessions",
+    "translation": "",
+    "context": "sidebar section title for the session list"
+  },
+  {
+    "term": "Set by QT_SCALE_FACTOR.",
+    "translation": "",
+    "context": "interface zoom slider description when the environment overrides it"
+  },
+  {
+    "term": "Settings",
+    "translation": "",
+    "context": "settings window header title | settings window title | toolbar button that opens settings"
+  },
+  {
+    "term": "Shape",
+    "translation": "",
+    "context": "appearance settings section label"
+  },
+  {
+    "term": "Shell",
+    "translation": "",
+    "context": "shell tool toggle label"
+  },
+  {
+    "term": "Shell command",
+    "translation": "",
+    "context": "permission dialog shell kind label"
+  },
+  {
+    "term": "Show Dux Code in the system tray.",
+    "translation": "",
+    "context": "tray icon toggle description"
+  },
+  {
+    "term": "Show a system notification when something fails.",
+    "translation": "",
+    "context": "error notification toggle description"
+  },
+  {
+    "term": "Show a system notification when the agent finishes or needs attention.",
+    "translation": "",
+    "context": "agent notification toggle description"
+  },
+  {
+    "term": "Show a system notification when the agent needs permission.",
+    "translation": "",
+    "context": "permission notification toggle description"
+  },
+  {
+    "term": "Show the question",
+    "translation": "",
+    "context": "tool card button that reopens a model question the user hid"
+  },
+  {
+    "term": "Show tray icon",
+    "translation": "",
+    "context": "tray icon toggle label"
+  },
+  {
+    "term": "Skills, MCP and tools",
+    "translation": "",
+    "context": "settings sidebar tab hint"
+  },
+  {
+    "term": "Skills, MCP servers and the tools the agent is allowed to use.",
+    "translation": "",
+    "context": "extensions settings section subtitle"
+  },
+  {
+    "term": "Skip — you decide",
+    "translation": "",
+    "context": "question dialog skip button"
+  },
+  {
+    "term": "Smart rename",
+    "translation": "",
+    "context": "session context menu action, rename using the model"
+  },
+  {
+    "term": "Smart rename failed.",
+    "translation": "",
+    "context": "toast when the model did not return a title"
+  },
+  {
+    "term": "Smooth",
+    "translation": "",
+    "context": "spring bounce option"
+  },
+  {
+    "term": "Sound",
+    "translation": "",
+    "context": "notification sound toggle label"
+  },
+  {
+    "term": "Spacious",
+    "translation": "",
+    "context": "interface density option with the most room between items"
+  },
+  {
+    "term": "Spring",
+    "translation": "",
+    "context": "spring bounce setting label"
+  },
+  {
+    "term": "Square",
+    "translation": "",
+    "context": "radius strength slider label at zero"
+  },
+  {
+    "term": "Start at login",
+    "translation": "",
+    "context": "autostart setting label"
+  },
+  {
+    "term": "Starting…",
+    "translation": "",
+    "context": "mcp row subtitle while the server starts"
+  },
+  {
+    "term": "Status",
+    "translation": "",
+    "context": "about page daemon status column label"
+  },
+  {
+    "term": "Stopped",
+    "translation": "",
+    "context": "mcp row subtitle when the server is not running"
+  },
+  {
+    "term": "Summary of %1 earlier messages",
+    "translation": "",
+    "context": "compaction seam in the transcript: a summary replaced this many messages"
+  },
+  {
+    "term": "Summary of 1 earlier message",
+    "translation": "",
+    "context": "compaction seam in the transcript: a summary replaced exactly one message"
+  },
+  {
+    "term": "Sunday",
+    "translation": "",
+    "context": "weekday name"
+  },
+  {
+    "term": "Switched off",
+    "translation": "",
+    "context": "mcp row subtitle when the server is disabled"
+  },
+  {
+    "term": "System",
+    "translation": "",
+    "context": "font source button group option for the Qt system font"
+  },
+  {
+    "term": "System default",
+    "translation": "",
+    "context": "language dropdown option that follows the system language"
+  },
+  {
+    "term": "System notifications",
+    "translation": "",
+    "context": "notifications settings section label"
+  },
+  {
+    "term": "System preference unavailable — using dark.",
+    "translation": "",
+    "context": "theme mode setting description"
+  },
+  {
+    "term": "Task added",
+    "translation": "",
+    "context": "toast after creating a task"
+  },
+  {
+    "term": "Task saved",
+    "translation": "",
+    "context": "toast after saving a task"
+  },
+  {
+    "term": "Tasks",
+    "translation": "",
+    "context": "sidebar nav: tasks | task modal window title"
+  },
+  {
+    "term": "Tasks run with no window open, so nobody can answer a permission prompt. With this off the task can only read; turn it on and it may write and run commands unattended.",
+    "translation": "",
+    "context": "task form auto-approve description"
+  },
+  {
+    "term": "Test connection",
+    "translation": "",
+    "context": "search backend test button"
+  },
+  {
+    "term": "Text color",
+    "translation": "",
+    "context": "focus ring color option"
+  },
+  {
+    "term": "That message is still being saved. Try again in a moment.",
+    "translation": "",
+    "context": "toast when a message has no id from the daemon yet"
+  },
+  {
+    "term": "The agent loses web search if this was the only backend.",
+    "translation": "",
+    "context": "remove search backend confirmation message"
+  },
+  {
+    "term": "The provider searches on its own side, so the local web_search tool is not offered. This is billed per search.",
+    "translation": "",
+    "context": "provider setup native search toggle description"
+  },
+  {
+    "term": "The run stopped with an error.",
+    "translation": "",
+    "context": "system notification text"
+  },
+  {
+    "term": "Theme",
+    "translation": "",
+    "context": "appearance settings section label | theme mode setting label"
+  },
+  {
+    "term": "Theme, shape and motion",
+    "translation": "",
+    "context": "settings sidebar tab hint"
+  },
+  {
+    "term": "Thickness",
+    "translation": "",
+    "context": "focus ring thickness slider label"
+  },
+  {
+    "term": "Thinking…",
+    "translation": "",
+    "context": "label while the model is still reasoning"
+  },
+  {
+    "term": "This model cannot read that much, so compaction actually happens at %1.",
+    "translation": "",
+    "context": "context compaction threshold dropdown description, threshold lowered to fit the model's window"
+  },
+  {
+    "term": "This model takes at most %1 tokens, so that is what gets sent.",
+    "translation": "",
+    "context": "max output tokens dropdown description, cap above the model ceiling"
+  },
+  {
+    "term": "This model takes at most %1 tokens.",
+    "translation": "",
+    "context": "max output tokens dropdown description, model ceiling"
+  },
+  {
+    "term": "This month",
+    "translation": "",
+    "context": "session group: this month | sidebar session group"
+  },
+  {
+    "term": "This week",
+    "translation": "",
+    "context": "session group: this week | sidebar session group"
+  },
+  {
+    "term": "Thought",
+    "translation": "",
+    "context": "label of a finished reasoning block"
+  },
+  {
+    "term": "Thursday",
+    "translation": "",
+    "context": "weekday name"
+  },
+  {
+    "term": "Time (HH:MM)",
+    "translation": "",
+    "context": "task form time label"
+  },
+  {
+    "term": "Title bars",
+    "translation": "",
+    "context": "window title bars toggle label"
+  },
+  {
+    "term": "Today",
+    "translation": "",
+    "context": "session group: today | sidebar session group"
+  },
+  {
+    "term": "Toggle sidebar",
+    "translation": "",
+    "context": "toolbar button that shows or hides the sidebar"
+  },
+  {
+    "term": "Tool",
+    "translation": "",
+    "context": "search result: the hit is in a tool result"
+  },
+  {
+    "term": "Tool rounds per reply. At the limit the last round runs without tools.",
+    "translation": "",
+    "context": "max tool steps dropdown description"
+  },
+  {
+    "term": "Tool steps per reply",
+    "translation": "",
+    "context": "max tool steps dropdown label"
+  },
+  {
+    "term": "Tuesday",
+    "translation": "",
+    "context": "weekday name"
+  },
+  {
+    "term": "Turn it back on with the globe button next to the composer.",
+    "translation": "",
+    "context": "web search page notice when the composer toggle is off, subtitle"
+  },
+  {
+    "term": "Turning this off stops the server but keeps its settings.",
+    "translation": "",
+    "context": "mcp enabled description"
+  },
+  {
+    "term": "Type to search every conversation.",
+    "translation": "",
+    "context": "search modal hint before typing"
+  },
+  {
+    "term": "Typography",
+    "translation": "",
+    "context": "appearance settings section label"
+  },
+  {
+    "term": "Unknown error",
+    "translation": "",
+    "context": "toast fallback when the daemon sends no message"
+  },
+  {
+    "term": "Unpin",
+    "translation": "",
+    "context": "session context menu action, unpin from the top"
+  },
+  {
+    "term": "Untitled",
+    "translation": "",
+    "context": "search result: session without a title"
+  },
+  {
+    "term": "Use PATH",
+    "translation": "",
+    "context": "browser binary reset to path button"
+  },
+  {
+    "term": "Use a bundled color palette.",
+    "translation": "",
+    "context": "color source description for preset"
+  },
+  {
+    "term": "Use default",
+    "translation": "",
+    "context": "task form model option"
+  },
+  {
+    "term": "Use the model's built-in search",
+    "translation": "",
+    "context": "provider setup native search toggle"
+  },
+  {
+    "term": "Use this backend",
+    "translation": "",
+    "context": "search row use button tooltip"
+  },
+  {
+    "term": "Using Dux Shell dynamic colors.",
+    "translation": "",
+    "context": "auto color source status when DMS is active"
+  },
+  {
+    "term": "Using Matugen colors.",
+    "translation": "",
+    "context": "Matugen color source status when loaded"
+  },
+  {
+    "term": "Version",
+    "translation": "",
+    "context": "about page daemon version column label"
+  },
+  {
+    "term": "Version and links",
+    "translation": "",
+    "context": "settings sidebar tab hint"
+  },
+  {
+    "term": "Web access",
+    "translation": "",
+    "context": "composer toggle for web access"
+  },
+  {
+    "term": "Web access is off — no search, fetching or browser for this and later messages",
+    "translation": "",
+    "context": "web access tooltip when off"
+  },
+  {
+    "term": "Web access is on — page fetching and the browser only (no search backend yet)",
+    "translation": "",
+    "context": "web access tooltip when on but no search backend"
+  },
+  {
+    "term": "Web access is on — search, page fetching and the browser",
+    "translation": "",
+    "context": "web access tooltip when on and a search backend exists"
+  },
+  {
+    "term": "Web search",
+    "translation": "",
+    "context": "settings sidebar tab label | web search settings section header"
+  },
+  {
+    "term": "Web search is switched off",
+    "translation": "",
+    "context": "web search page notice when the composer toggle is off"
+  },
+  {
+    "term": "Wednesday",
+    "translation": "",
+    "context": "weekday name"
+  },
+  {
+    "term": "Weekday",
+    "translation": "",
+    "context": "task form weekday label"
+  },
+  {
+    "term": "Weight",
+    "translation": "",
+    "context": "font weight slider label"
+  },
+  {
+    "term": "What should it do? This is sent as the first message.",
+    "translation": "",
+    "context": "task form prompt placeholder"
+  },
+  {
+    "term": "What the window's close button does.",
+    "translation": "",
+    "context": "close behavior setting description"
+  },
+  {
+    "term": "Where the models come from. Keys stay on this machine.",
+    "translation": "",
+    "context": "providers settings section subtitle"
+  },
+  {
+    "term": "Whether tool calls need approval. Inside the workspace, shell commands also run sandboxed.",
+    "translation": "",
+    "context": "approval mode dropdown description with sandbox"
+  },
+  {
+    "term": "Whether tool calls need approval. No sandbox here, so a command can still write anywhere.",
+    "translation": "",
+    "context": "approval mode dropdown description without sandbox"
+  },
+  {
+    "term": "Windows",
+    "translation": "",
+    "context": "appearance settings section label"
+  },
+  {
+    "term": "Working",
+    "translation": "",
+    "context": "streaming status, agent is running | tool card badge while running"
+  },
+  {
+    "term": "Working directory",
+    "translation": "",
+    "context": "task form working directory label"
+  },
+  {
+    "term": "You",
+    "translation": "",
+    "context": "search result: the message is from the user"
+  },
+  {
+    "term": "Zoom",
+    "translation": "",
+    "context": "appearance settings section label"
+  },
+  {
+    "term": "accessibility animation",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  },
+  {
+    "term": "agent-browser",
+    "translation": "",
+    "context": "browser binary row label"
+  },
+  {
+    "term": "autostart boot startup",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  },
+  {
+    "term": "cards panes contrast",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  },
+  {
+    "term": "click feedback animation",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  },
+  {
+    "term": "compaction summary context threshold",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  },
+  {
+    "term": "dark",
+    "translation": "",
+    "context": "current scheme name in theme mode description"
+  },
+  {
+    "term": "dark light mode scheme",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  },
+  {
+    "term": "decorations csd header",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  },
+  {
+    "term": "done",
+    "translation": "",
+    "context": "tool card status after the tool finished"
+  },
+  {
+    "term": "e.g. GitHub",
+    "translation": "",
+    "context": "mcp form name placeholder"
+  },
+  {
+    "term": "e.g. Ollama on this machine",
+    "translation": "",
+    "context": "provider setup name field placeholder"
+  },
+  {
+    "term": "frosted glass compositor effect",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  },
+  {
+    "term": "generating",
+    "translation": "",
+    "context": "window title suffix while a reply streams"
+  },
+  {
+    "term": "light",
+    "translation": "",
+    "context": "current scheme name in theme mode description"
+  },
+  {
+    "term": "loop steps limit fuse",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  },
+  {
+    "term": "outline keyboard accessibility",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  },
+  {
+    "term": "palette accent colors",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  },
+  {
+    "term": "permissions approval sandbox trust",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  },
+  {
+    "term": "quit exit hide tray",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  },
+  {
+    "term": "running…",
+    "translation": "",
+    "context": "tool card status while the tool is executing"
+  },
+  {
+    "term": "sandbox permissions files read write",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  },
+  {
+    "term": "spacing compact spacious padding rows",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  },
+  {
+    "term": "tokens max_tokens reply length cap",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  },
+  {
+    "term": "transparency translucent glass",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  },
+  {
+    "term": "tray indicator",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  },
+  {
+    "term": "typography family fonts",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  },
+  {
+    "term": "waiting for your answer",
+    "translation": "",
+    "context": "tool card note beside the button that reopens a hidden question"
+  },
+  {
+    "term": "zoom text size",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  },
+  {
+    "term": "zoom ui size",
+    "translation": "",
+    "context": "settings search keywords, space separated, add synonyms in your language"
+  }
+]

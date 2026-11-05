@@ -1,0 +1,85 @@
+name: Release
+
+# Pushing a v* tag builds both architectures and publishes them. The workflow can also be started
+# from the Actions tab; pick the tag in the "Use workflow from" dropdown, because the version comes
+# from the ref name.
+on:
+  push:
+    tags: ['v[0-9]*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: build ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [amd64, arm64]
+    steps:
+      - name: Refuse anything that is not a version tag
+        # A dispatch on a branch would otherwise publish a release called "main".
+        if: ${{ !startsWith(github.ref_name, 'v') }}
+        run: |
+          echo "::error::This workflow builds releases from v* tags; '${{ github.ref_name }}' is not one."
+          exit 1
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          # git describe and git rev-list both need the history, and the tag has to be present
+          # or the version falls back to 0.0.0.
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: core/go.mod
+          cache-dependency-path: core/go.sum
+
+      - name: Build (embedded UI)
+        env:
+          GOARCH: ${{ matrix.arch }}
+          VERSION: ${{ github.ref_name }}
+          # In CI a broken contract is a failure, not a warning: the binary is about to be published.
+          STRICT: '1'
+        run: |
+          VERSION="${VERSION#v}"
+          make release
+          # Written from inside dist/ so the file names the archive alone: a checksum that says
+          # "dist/dcode-linux-amd64.tar.gz" is useless to someone who just downloaded the asset.
+          ( cd dist && sha256sum "dcode-linux-${GOARCH}.tar.gz" > "dcode-linux-${GOARCH}.sha256" )
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dcode-linux-${{ matrix.arch }}
+          path: |
+            dist/dcode-linux-${{ matrix.arch }}.tar.gz
+            dist/dcode-linux-${{ matrix.arch }}.sha256
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create the release and attach both architectures
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          # --repo on every call: this job is just a runner with artifacts, it has no checkout, and
+          # without it gh fails with "fatal: not a git repository".
+          # Create-or-skip then upload --clobber, so re-running the workflow does not fail on an
+          # existing release.
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
+              --title "Dux Code ${TAG#v}" --generate-notes
+          gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" \
+            dist/*.tar.gz dist/*.sha256 --clobber

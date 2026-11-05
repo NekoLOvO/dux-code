@@ -1,0 +1,1466 @@
+{
+  " · %1 tools": {
+    " · %1 tools": " · 限定 %1 個工具"
+  },
+  "%1 added": {
+    "%1 added": "已新增 %1 個"
+  },
+  "%1 items": {
+    "%1 items": "%1 個項目"
+  },
+  "%1 matches": {
+    "%1 matches": "找到 %1 筆"
+  },
+  "%1 models": {
+    "%1 models": "%1 個模型"
+  },
+  "%1 models enabled": {
+    "%1 models enabled": "%1 個模型已啟用"
+  },
+  "%1 models found": {
+    "%1 models found": "找到 %1 個模型"
+  },
+  "%1 more waiting": {
+    "%1 more waiting": "另有 %1 個在等"
+  },
+  "%1 selected": {
+    "%1 selected": "已選 %1 個"
+  },
+  "%1 · failed": {
+    "%1 · failed": "%1 · 失敗"
+  },
+  "1 item": {
+    "1 item": "1 個項目"
+  },
+  "1 match": {
+    "1 match": "1 項符合"
+  },
+  "1 selected": {
+    "1 selected": "已選 1 個"
+  },
+  "50 matches Material. Lower is squarer, higher is rounder.": {
+    "50 matches Material. Lower is squarer, higher is rounder.": "50 對應 Material 形狀。數值越低越方，越高越圓。"
+  },
+  "<a href=\"%2\" style=\"text-decoration:none; color:%1;\">MIT License</a>": {
+    "<a href=\"%2\" style=\"text-decoration:none; color:%1;\">MIT License</a>": "<a href=\"%2\" style=\"text-decoration:none; color:%1;\">MIT 授權</a>"
+  },
+  "A file with this name already exists. Do you want to overwrite it?": {
+    "A file with this name already exists. Do you want to overwrite it?": "這個檔名已經存在，要覆蓋嗎？"
+  },
+  "A hard cap: anything past it is cut mid-sentence and marked truncated.": {
+    "A hard cap: anything past it is cut mid-sentence and marked truncated.": "這是硬上限：超過的部分會被從句子中間切斷，並標示為已截斷。"
+  },
+  "A name cannot be empty or contain a slash": {
+    "A name cannot be empty or contain a slash": "名稱不能空白，也不能有斜線"
+  },
+  "A skill is a folder with a SKILL.md the agent loads on demand, under ~/.agents/skills.": {
+    "A skill is a folder with a SKILL.md the agent loads on demand, under ~/.agents/skills.": "技能是一個含 SKILL.md 的資料夾，代理需要時才載入，放在 ~/.agents/skills 底下。"
+  },
+  "A skill is a folder with a SKILL.md the agent loads on demand. Put it under %1.": {
+    "A skill is a folder with a SKILL.md the agent loads on demand. Put it under %1.": "技能是一個含 SKILL.md 的資料夾，代理需要時才載入。放在 %1 底下。"
+  },
+  "A task is a prompt that runs on a schedule. Each run gets its own conversation, so you can read what it did — or keep asking.": {
+    "A task is a prompt that runs on a schedule. Each run gets its own conversation, so you can read what it did — or keep asking.": "任務是一段照排程自動送出的提示。每次執行都有自己的對話，你可以看它做了什麼，也可以接著追問。"
+  },
+  "A task needs a prompt to run.": {
+    "A task needs a prompt to run.": "任務需要一段提示才能執行。"
+  },
+  "AM": {
+    "AM": "上午"
+  },
+  "API": {
+    "API": "API"
+  },
+  "API endpoint": {
+    "API endpoint": "API 端點"
+  },
+  "API key": {
+    "API key": "API key"
+  },
+  "API key not set": {
+    "API key not set": "尚未設定 API key"
+  },
+  "API key — leave empty to keep the saved one": {
+    "API key — leave empty to keep the saved one": "API key — 留空則保留已儲存的那把"
+  },
+  "About": {
+    "About": "關於"
+  },
+  "Add": {
+    "Add": "新增"
+  },
+  "Add MCP server": {
+    "Add MCP server": "新增 MCP 伺服器"
+  },
+  "Add provider": {
+    "Add provider": "新增提供者"
+  },
+  "Add search backend": {
+    "Add search backend": "新增搜尋後端"
+  },
+  "Added": {
+    "Added": "已新增"
+  },
+  "Agent": {
+    "Agent": "代理"
+  },
+  "Alerts and sounds": {
+    "Alerts and sounds": "通知與音效"
+  },
+  "Allow": {
+    "Allow": "允許"
+  },
+  "Always use the dark theme.": {
+    "Always use the dark theme.": "固定使用深色主題。"
+  },
+  "Always use the light theme.": {
+    "Always use the light theme.": "固定使用淺色主題。"
+  },
+  "An MCP server offers tools over stdio or streamable HTTP. Dux Code connects to it and hands its tools to the model. A local server runs as you do, outside the workspace sandbox.": {
+    "An MCP server offers tools over stdio or streamable HTTP. Dux Code connects to it and hands its tools to the model. A local server runs as you do, outside the workspace sandbox.": "MCP 伺服器透過 stdio 或 streamable HTTP 提供工具。Dux Code 會連上去，把工具交給模型。本機伺服器以你的身分執行，不受工作目錄沙箱限制。"
+  },
+  "App": {
+    "App": "應用程式"
+  },
+  "Appearance": {
+    "Appearance": "外觀"
+  },
+  "Application and agent defaults": {
+    "Application and agent defaults": "應用程式與代理預設"
+  },
+  "Application behavior and agent defaults.": {
+    "Application behavior and agent defaults.": "應用程式行為與代理預設值。"
+  },
+  "Apply and restart": {
+    "Apply and restart": "套用並重啟"
+  },
+  "Arguments": {
+    "Arguments": "參數"
+  },
+  "Ascending": {
+    "Ascending": "升冪"
+  },
+  "Ask, search, or brainstorm…": {
+    "Ask, search, or brainstorm…": "提問、搜尋，或一起想…"
+  },
+  "Ask, search, or brainstorm…   Shift+Enter for a new line": {
+    "Ask, search, or brainstorm…   Shift+Enter for a new line": "提問、搜尋，或一起想…   Shift+Enter 換行"
+  },
+  "Assistant": {
+    "Assistant": "助手"
+  },
+  "Attach files": {
+    "Attach files": "附加檔案"
+  },
+  "Auto": {
+    "Auto": "自動"
+  },
+  "Auto opens a card while the tool runs and folds it when it finishes.": {
+    "Auto opens a card while the tool runs and folds it when it finishes.": "工具執行時自動展開卡片，結束後自動收合。"
+  },
+  "Auto opens the block while reasoning and folds it when the answer starts.": {
+    "Auto opens the block while reasoning and folds it when the answer starts.": "思考時自動展開區塊，開始回答後自動收合。"
+  },
+  "Auto-approve tool calls": {
+    "Auto-approve tool calls": "工具呼叫自動核准"
+  },
+  "Auto-approve tools": {
+    "Auto-approve tools": "自動核准工具"
+  },
+  "Auto-expand the thinking block": {
+    "Auto-expand the thinking block": "自動展開思考區塊"
+  },
+  "Auto-expand tool calls": {
+    "Auto-expand tool calls": "自動展開工具呼叫"
+  },
+  "Available once the daemon is running.": {
+    "Available once the daemon is running.": "daemon 啟動後就能用。"
+  },
+  "Available skills": {
+    "Available skills": "可用技能"
+  },
+  "Back": {
+    "Back": "返回"
+  },
+  "Backend": {
+    "Backend": "後端"
+  },
+  "Backend not connected.": {
+    "Backend not connected.": "後端尚未連線。"
+  },
+  "Backends for web_search. web_fetch needs none of them. Keys stay here.": {
+    "Backends for web_search. web_fetch needs none of them. Keys stay here.": "web_search 要用的後端。web_fetch 不需要後端。金鑰只留在這台機器。"
+  },
+  "Background blur": {
+    "Background blur": "背景模糊"
+  },
+  "Balanced": {
+    "Balanced": "平衡"
+  },
+  "Binary file": {
+    "Binary file": "二進位檔"
+  },
+  "Blurs what shows through the window. Needs a compositor that supports background blur.": {
+    "Blurs what shows through the window. Needs a compositor that supports background blur.": "模糊透過視窗顯示的內容。需要支援背景模糊的合成器。"
+  },
+  "Branch": {
+    "Branch": "分支"
+  },
+  "Branch created": {
+    "Branch created": "已建立分支"
+  },
+  "Broken link": {
+    "Broken link": "失效的連結"
+  },
+  "Browser action": {
+    "Browser action": "瀏覽器操作"
+  },
+  "Built-in tools": {
+    "Built-in tools": "內建工具"
+  },
+  "Cancel": {
+    "Cancel": "取消"
+  },
+  "Cancelled": {
+    "Cancelled": "已取消"
+  },
+  "Cancelled %1": {
+    "Cancelled %1": "已取消 · %1"
+  },
+  "Capabilities": {
+    "Capabilities": "能力"
+  },
+  "Change the endpoint, replace the key, or fetch the model list again.": {
+    "Change the endpoint, replace the key, or fetch the model list again.": "改端點、換 key，或重新取得一次模型清單。"
+  },
+  "Choose": {
+    "Choose": "選擇"
+  },
+  "Choose a JSON color theme file.": {
+    "Choose a JSON color theme file.": "選擇一個 JSON 色彩主題檔。"
+  },
+  "Choose a backend": {
+    "Choose a backend": "選一個後端"
+  },
+  "Choose a provider": {
+    "Choose a provider": "選一個服務"
+  },
+  "Choose icon": {
+    "Choose icon": "選擇圖示"
+  },
+  "Choose when to receive system notifications and play sounds.": {
+    "Choose when to receive system notifications and play sounds.": "選擇什麼時候跳系統通知、什麼時候出聲。"
+  },
+  "Choose working directory": {
+    "Choose working directory": "選擇工作目錄"
+  },
+  "Clear the selection": {
+    "Clear the selection": "取消選取"
+  },
+  "Close behavior": {
+    "Close behavior": "關閉視窗時"
+  },
+  "Closing hides the window; reopen it from your app launcher.": {
+    "Closing hides the window; reopen it from your app launcher.": "關閉只會隱藏視窗，從應用程式選單再打開就好。"
+  },
+  "Code": {
+    "Code": "Code"
+  },
+  "Color": {
+    "Color": "顏色"
+  },
+  "Color source": {
+    "Color source": "色彩來源"
+  },
+  "Comfortable": {
+    "Comfortable": "適中"
+  },
+  "Command": {
+    "Command": "指令"
+  },
+  "Communication": {
+    "Communication": "通訊"
+  },
+  "Community": {
+    "Community": "社群"
+  },
+  "Compact": {
+    "Compact": "緊湊"
+  },
+  "Compose": {
+    "Compose": "編輯"
+  },
+  "Compress history above": {
+    "Compress history above": "超過這個量就壓縮歷史"
+  },
+  "Confirm": {
+    "Confirm": "確認"
+  },
+  "Connected": {
+    "Connected": "已連線"
+  },
+  "Connected · %1 results · %2 ms": {
+    "Connected · %1 results · %2 ms": "連線成功 · %1 筆結果 · %2 毫秒"
+  },
+  "Context": {
+    "Context": "上下文"
+  },
+  "Continue": {
+    "Continue": "繼續"
+  },
+  "Copied": {
+    "Copied": "已複製"
+  },
+  "Copy": {
+    "Copy": "複製"
+  },
+  "Copy the reasoning": {
+    "Copy the reasoning": "複製思考內容"
+  },
+  "Copy the tool output": {
+    "Copy the tool output": "複製工具輸出"
+  },
+  "Copy this block": {
+    "Copy this block": "複製這段"
+  },
+  "Could not create the branch": {
+    "Could not create the branch": "建立分支失敗"
+  },
+  "Could not read that file — expected a JSON color theme.": {
+    "Could not read that file — expected a JSON color theme.": "讀不了這個檔案——應該是 JSON 色彩主題。"
+  },
+  "Created": {
+    "Created": "建立時間"
+  },
+  "Custom": {
+    "Custom": "自訂"
+  },
+  "Dark": {
+    "Dark": "深色"
+  },
+  "Decrease": {
+    "Decrease": "減少"
+  },
+  "Default": {
+    "Default": "預設"
+  },
+  "Delete": {
+    "Delete": "刪除"
+  },
+  "Dense": {
+    "Dense": "密集"
+  },
+  "Density": {
+    "Density": "密度"
+  },
+  "Deny": {
+    "Deny": "拒絕"
+  },
+  "Descending": {
+    "Descending": "降冪"
+  },
+  "Display family": {
+    "Display family": "標題字型"
+  },
+  "Do not ask before each tool call": {
+    "Do not ask before each tool call": "工具呼叫不要每次問我"
+  },
+  "Docs": {
+    "Docs": "文件"
+  },
+  "Done": {
+    "Done": "完成"
+  },
+  "Drag to reorder": {
+    "Drag to reorder": "拖曳調整順序"
+  },
+  "Duration": {
+    "Duration": "時長"
+  },
+  "Dux Code cannot tell what a server will do. Only turn this on if you trust it.": {
+    "Dux Code cannot tell what a server will do. Only turn this on if you trust it.": "Dux Code 沒辦法判斷這個伺服器會做什麼。確定它安全再打開。"
+  },
+  "Dux Code is a native coding agent for the <a href=\"%2\" style=\"text-decoration:none; color:%1;\">Dux Shell</a> desktop. The model is driven straight from a Go daemon over a Unix socket and everything is drawn with <a href=\"%3\" style=\"text-decoration:none; color:%1;\">Quickshell</a> — no webview, no Electron.": {
+    "Dux Code is a native coding agent for the <a href=\"%2\" style=\"text-decoration:none; color:%1;\">Dux Shell</a> desktop. The model is driven straight from a Go daemon over a Unix socket and everything is drawn with <a href=\"%3\" style=\"text-decoration:none; color:%1;\">Quickshell</a> — no webview, no Electron.": "Dux Code 是 <a href=\"%2\" style=\"text-decoration:none; color:%1;\">Dux Shell</a> 桌面環境的原生編碼代理。模型由一支 Go daemon 經 Unix socket 直接驅動，畫面全部用 <a href=\"%3\" style=\"text-decoration:none; color:%1;\">Quickshell</a> 畫出來——沒有 webview，也沒有 Electron。"
+  },
+  "Dux Code will close and reopen with the new zoom.": {
+    "Dux Code will close and reopen with the new zoom.": "Dux Code 會關閉並以新的縮放重新開啟。"
+  },
+  "Dux Shell has no font settings to follow, using %1.": {
+    "Dux Shell has no font settings to follow, using %1.": "Dux Shell 沒有字型設定可跟，改用 %1。"
+  },
+  "Dux Shell not detected — using the %1 preset.": {
+    "Dux Shell not detected — using the %1 preset.": "找不到 Dux Shell——改用 %1 預設。"
+  },
+  "Earlier": {
+    "Earlier": "更早"
+  },
+  "Edit": {
+    "Edit": "編輯"
+  },
+  "Edit MCP server": {
+    "Edit MCP server": "編輯 MCP 伺服器"
+  },
+  "Edit message": {
+    "Edit message": "編輯訊息"
+  },
+  "Enabled": {
+    "Enabled": "啟用"
+  },
+  "Enter filename...": {
+    "Enter filename...": "輸入檔名…"
+  },
+  "Enter the endpoint first.": {
+    "Enter the endpoint first.": "請先填入端點位址。"
+  },
+  "Environment: %1 (values stay in config.json)": {
+    "Environment: %1 (values stay in config.json)": "環境變數：%1（值留在 config.json）"
+  },
+  "Errors": {
+    "Errors": "錯誤"
+  },
+  "Every %1 at %2": {
+    "Every %1 at %2": "每週%1 %2"
+  },
+  "Every %1 minutes": {
+    "Every %1 minutes": "每 %1 分鐘"
+  },
+  "Every N minutes": {
+    "Every N minutes": "每隔幾分鐘"
+  },
+  "Every day": {
+    "Every day": "每天"
+  },
+  "Every day at %1": {
+    "Every day at %1": "每天 %1"
+  },
+  "Every week": {
+    "Every week": "每週"
+  },
+  "Everything above this line stays in your transcript but is no longer sent to the model.": {
+    "Everything above this line stays in your transcript but is no longer sent to the model.": "這行以上的訊息仍保留在對話紀錄裡，但不會再送給模型。"
+  },
+  "Expand editor": {
+    "Expand editor": "放大編輯區"
+  },
+  "Export": {
+    "Export": "匯出"
+  },
+  "Export failed.": {
+    "Export failed.": "匯出失敗。"
+  },
+  "Exported to %1": {
+    "Exported to %1": "已匯出到 %1"
+  },
+  "Extensions": {
+    "Extensions": "擴充"
+  },
+  "Extra high": {
+    "Extra high": "極高"
+  },
+  "Failed %1": {
+    "Failed %1": "失敗 · %1"
+  },
+  "Failed to regenerate": {
+    "Failed to regenerate": "重新生成失敗"
+  },
+  "Failed to send": {
+    "Failed to send": "送出失敗"
+  },
+  "Failed to start: %1": {
+    "Failed to start: %1": "啟動失敗：%1"
+  },
+  "Family": {
+    "Family": "字型"
+  },
+  "Fetch models": {
+    "Fetch models": "取得模型"
+  },
+  "Fetching…": {
+    "Fetching…": "取得中…"
+  },
+  "File Already Exists": {
+    "File Already Exists": "檔案已存在"
+  },
+  "File System": {
+    "File System": "檔案系統"
+  },
+  "File access": {
+    "File access": "檔案存取"
+  },
+  "Files - %1": {
+    "Files - %1": "檔案 - %1"
+  },
+  "Files are unavailable because the file service is not running": {
+    "Files are unavailable because the file service is not running": "檔案服務沒在跑，暫時看不到檔案"
+  },
+  "First %1 of %2": {
+    "First %1 of %2": "前 %1 個，共 %2 個"
+  },
+  "Focus ring": {
+    "Focus ring": "焦點框"
+  },
+  "Folder name": {
+    "Folder name": "資料夾名稱"
+  },
+  "Follow Dux Shell colors, falling back to a preset.": {
+    "Follow Dux Shell colors, falling back to a preset.": "跟著 Dux Shell 的色彩走，取不到就用預設。"
+  },
+  "Follow colors generated by Matugen.": {
+    "Follow colors generated by Matugen.": "跟著 Matugen 產生的配色。"
+  },
+  "Following the system color scheme (currently %1).": {
+    "Following the system color scheme (currently %1).": "跟著系統配色（目前是%1）。"
+  },
+  "Font scale": {
+    "Font scale": "字型縮放"
+  },
+  "Font source": {
+    "Font source": "字型來源"
+  },
+  "Foreground layers": {
+    "Foreground layers": "前景圖層"
+  },
+  "Forward": {
+    "Forward": "前進"
+  },
+  "Friday": {
+    "Friday": "週五"
+  },
+  "Fun": {
+    "Fun": "趣味"
+  },
+  "General": {
+    "General": "一般"
+  },
+  "GitHub": {
+    "GitHub": "GitHub"
+  },
+  "Give the task a name.": {
+    "Give the task a name.": "幫這個任務取個名字。"
+  },
+  "Give this endpoint a name — you can add more than one.": {
+    "Give this endpoint a name — you can add more than one.": "給這個端點一個名字——同一種服務可以接好幾份。"
+  },
+  "Grid view": {
+    "Grid view": "格狀檢視"
+  },
+  "Hide": {
+    "Hide": "先隱藏"
+  },
+  "Hide keyboard": {
+    "Hide keyboard": "收起鍵盤"
+  },
+  "Hide password": {
+    "Hide password": "隱藏密碼"
+  },
+  "High": {
+    "High": "高"
+  },
+  "Home": {
+    "Home": "主目錄"
+  },
+  "Hour": {
+    "Hour": "時"
+  },
+  "How much room list rows and settings rows get.": {
+    "How much room list rows and settings rows get.": "清單與設定列的間距大小。"
+  },
+  "In use": {
+    "In use": "使用中"
+  },
+  "Increase": {
+    "Increase": "增加"
+  },
+  "Inside the working directory": {
+    "Inside the working directory": "工作目錄內"
+  },
+  "Instance URL": {
+    "Instance URL": "實例網址"
+  },
+  "Interface density": {
+    "Interface density": "介面密度"
+  },
+  "Interface scale": {
+    "Interface scale": "介面縮放"
+  },
+  "Its models disappear from the picker. Nothing is deleted on the provider side.": {
+    "Its models disappear from the picker. Nothing is deleted on the provider side.": "它的模型會從選單消失。服務商那邊不會被刪除任何東西。"
+  },
+  "Its tools disappear from the agent. The command and environment are not touched.": {
+    "Its tools disappear from the agent. The command and environment are not touched.": "它的工具會從代理手上消失。指令與環境變數不會被動到。"
+  },
+  "Keeps cards and panes solid when the window is see-through.": {
+    "Keeps cards and panes solid when the window is see-through.": "視窗透明時，卡片與面板仍保持不透明。"
+  },
+  "Key set": {
+    "Key set": "已儲存"
+  },
+  "Keys are stored in the config file on this machine.": {
+    "Keys are stored in the config file on this machine.": "key 存在這台機器的設定檔裡。"
+  },
+  "Keys are stored in the config file on this machine. Nothing is shared.": {
+    "Keys are stored in the config file on this machine. Nothing is shared.": "金鑰存在這台機器的設定檔裡，不會分享出去。"
+  },
+  "Language": {
+    "Language": "語言"
+  },
+  "Language of the interface.": {
+    "Language of the interface.": "介面語言。"
+  },
+  "Launch Dux Code in the background when you log in.": {
+    "Launch Dux Code in the background when you log in.": "登入時在背景啟動 Dux Code。"
+  },
+  "Layer opacity": {
+    "Layer opacity": "圖層不透明度"
+  },
+  "Lets the desktop show through the window. Text and controls stay solid.": {
+    "Lets the desktop show through the window. Text and controls stay solid.": "讓桌面透過視窗顯示；文字與控制項仍保持不透明。"
+  },
+  "Light": {
+    "Light": "淺色"
+  },
+  "List view": {
+    "List view": "清單檢視"
+  },
+  "Load colors from your own theme file.": {
+    "Load colors from your own theme file.": "從你自己的主題檔載入配色。"
+  },
+  "Loading…": {
+    "Loading…": "載入中…"
+  },
+  "Local": {
+    "Local": "本機"
+  },
+  "Low": {
+    "Low": "低"
+  },
+  "MCP server added": {
+    "MCP server added": "已新增 MCP 伺服器"
+  },
+  "MCP servers": {
+    "MCP servers": "MCP 伺服器"
+  },
+  "MCP tool": {
+    "MCP tool": "MCP 工具"
+  },
+  "Manual only": {
+    "Manual only": "僅手動"
+  },
+  "Matugen": {
+    "Matugen": "Matugen"
+  },
+  "Matugen theme missing or invalid — using the %1 preset.": {
+    "Matugen theme missing or invalid — using the %1 preset.": "Matugen 主題不存在或格式不對——改用 %1 預設。"
+  },
+  "Max": {
+    "Max": "最高"
+  },
+  "Max output per reply": {
+    "Max output per reply": "單次回覆上限"
+  },
+  "Medium": {
+    "Medium": "中"
+  },
+  "Menu": {
+    "Menu": "選單"
+  },
+  "Minimal": {
+    "Minimal": "最少"
+  },
+  "Minimize": {
+    "Minimize": "縮到系統匣"
+  },
+  "Minute": {
+    "Minute": "分"
+  },
+  "Minutes": {
+    "Minutes": "分鐘"
+  },
+  "Model": {
+    "Model": "模型"
+  },
+  "Model Context Protocol servers give the agent extra tools.": {
+    "Model Context Protocol servers give the agent extra tools.": "Model Context Protocol 伺服器可以給代理額外的工具。"
+  },
+  "Models": {
+    "Models": "模型"
+  },
+  "Models and API keys": {
+    "Models and API keys": "模型與 API key"
+  },
+  "Modify file": {
+    "Modify file": "修改檔案"
+  },
+  "Monday": {
+    "Monday": "週一"
+  },
+  "Monospace family": {
+    "Monospace family": "等寬字型"
+  },
+  "Morning digest": {
+    "Morning digest": "晨間摘要"
+  },
+  "Motion": {
+    "Motion": "動效"
+  },
+  "Move to Trash": {
+    "Move to Trash": "移到垃圾桶"
+  },
+  "Name": {
+    "Name": "名稱"
+  },
+  "Name (optional)": {
+    "Name (optional)": "名稱（選填）"
+  },
+  "Native coding agent for the shell": {
+    "Native coding agent for the shell": "Shell 原生編碼代理"
+  },
+  "Navigation": {
+    "Navigation": "導覽"
+  },
+  "Needs an opacity below 100%.": {
+    "Needs an opacity below 100%.": "需要把不透明度調到 100% 以下。"
+  },
+  "Never run": {
+    "Never run": "從未執行"
+  },
+  "New folder": {
+    "New folder": "新增資料夾"
+  },
+  "New session": {
+    "New session": "新對話"
+  },
+  "New task": {
+    "New task": "新增任務"
+  },
+  "No backend yet. SearXNG needs an instance URL; Brave and Tavily need a key.": {
+    "No backend yet. SearXNG needs an instance URL; Brave and Tavily need a key.": "還沒有後端。SearXNG 要填實例網址；Brave 和 Tavily 要填 key。"
+  },
+  "No key": {
+    "No key": "未設定 key"
+  },
+  "No locations found": {
+    "No locations found": "找不到位置"
+  },
+  "No matches": {
+    "No matches": "沒有符合的結果"
+  },
+  "No providers yet. Add one to get started.": {
+    "No providers yet. Add one to get started.": "還沒有任何提供者。新增一個就能開始。"
+  },
+  "No servers configured": {
+    "No servers configured": "還沒設定伺服器"
+  },
+  "No sessions yet": {
+    "No sessions yet": "還沒有對話"
+  },
+  "No skills installed": {
+    "No skills installed": "還沒安裝技能"
+  },
+  "No tasks yet": {
+    "No tasks yet": "還沒有任務"
+  },
+  "No theme file selected": {
+    "No theme file selected": "還沒選主題檔"
+  },
+  "Not supported yet": {
+    "Not supported yet": "尚未支援"
+  },
+  "Nothing matches \"%1\".": {
+    "Nothing matches \"%1\".": "找不到符合「%1」的設定。"
+  },
+  "Notifications": {
+    "Notifications": "通知"
+  },
+  "Numbers": {
+    "Numbers": "數字"
+  },
+  "Off": {
+    "Off": "關"
+  },
+  "Off keeps the task but stops it from running on its own.": {
+    "Off keeps the task but stops it from running on its own.": "關掉會保留任務，只是不再自己跑。"
+  },
+  "Off lets the compositor draw window decorations.": {
+    "Off lets the compositor draw window decorations.": "關掉就讓合成器畫視窗邊框。"
+  },
+  "Offline": {
+    "Offline": "離線"
+  },
+  "Older history becomes a summary past this size. Your transcript keeps everything.": {
+    "Older history becomes a summary past this size. Your transcript keeps everything.": "歷史超過這個量時，較早的部分會換成摘要；對話紀錄不會少任何一則。"
+  },
+  "On": {
+    "On": "開"
+  },
+  "Opacity": {
+    "Opacity": "不透明度"
+  },
+  "Open Dux Code": {
+    "Open Dux Code": "開啟 Dux Code"
+  },
+  "Optional — empty uses the daemon default": {
+    "Optional — empty uses the daemon default": "選填——留空就用 daemon 預設"
+  },
+  "Or type your own answer": {
+    "Or type your own answer": "或自己輸入回答"
+  },
+  "Outline": {
+    "Outline": "外框"
+  },
+  "Outline the control that has keyboard focus.": {
+    "Outline the control that has keyboard focus.": "把鍵盤焦點所在的控件框出來。"
+  },
+  "Overwrite": {
+    "Overwrite": "覆蓋"
+  },
+  "Owner": {
+    "Owner": "擁有者"
+  },
+  "PM": {
+    "PM": "下午"
+  },
+  "Palette: %1": {
+    "Palette: %1": "調色盤：%1"
+  },
+  "Paste an API key, then fetch the model list. Turn on the models you want in the picker.": {
+    "Paste an API key, then fetch the model list. Turn on the models you want in the picker.": "貼上 API key，然後取得模型清單。打開想在選單裡看到的那些。"
+  },
+  "Paused": {
+    "Paused": "已暫停"
+  },
+  "Permission needed": {
+    "Permission needed": "需要權限"
+  },
+  "Permissions": {
+    "Permissions": "權限"
+  },
+  "Pick a color source, palette, or your own theme file.": {
+    "Pick a color source, palette, or your own theme file.": "選色彩來源、調色盤，或自己的主題檔。"
+  },
+  "Pick a command to run, or enter a server URL.": {
+    "Pick a command to run, or enter a server URL.": "請填要執行的指令，或填入伺服器網址。"
+  },
+  "Pin": {
+    "Pin": "釘選"
+  },
+  "Pinned": {
+    "Pinned": "已釘選"
+  },
+  "Play a sound along with system notifications.": {
+    "Play a sound along with system notifications.": "跳系統通知時順便出聲。"
+  },
+  "Playful": {
+    "Playful": "活潑"
+  },
+  "Power Options": {
+    "Power Options": "電源選項"
+  },
+  "Preset": {
+    "Preset": "預設組合"
+  },
+  "Primary": {
+    "Primary": "主色"
+  },
+  "Provider added": {
+    "Provider added": "已新增提供者"
+  },
+  "Providers": {
+    "Providers": "提供者"
+  },
+  "Question": {
+    "Question": "提問"
+  },
+  "Quick Access": {
+    "Quick Access": "快速存取"
+  },
+  "Quit": {
+    "Quit": "結束程式"
+  },
+  "Radius strength": {
+    "Radius strength": "圓角程度"
+  },
+  "Ran %1": {
+    "Ran %1": "已執行 · %1"
+  },
+  "Ran %1 steps": {
+    "Ran %1 steps": "跑了 %1 步"
+  },
+  "Ran 1 step": {
+    "Ran 1 step": "跑了 1 步"
+  },
+  "Reached the output limit (%1 tokens) — this reply was cut off.": {
+    "Reached the output limit (%1 tokens) — this reply was cut off.": "已達輸出上限（%1 tokens），這段回覆被切斷了。"
+  },
+  "Reached the output limit — this reply was cut off.": {
+    "Reached the output limit — this reply was cut off.": "已達輸出上限，這段回覆被切斷了。"
+  },
+  "Read and write files in the workspace. Off removes the file tools.": {
+    "Read and write files in the workspace. Off removes the file tools.": "在工作目錄裡讀寫檔案。關掉就沒有檔案工具。"
+  },
+  "Reduce motion": {
+    "Reduce motion": "減少動態"
+  },
+  "Refresh models": {
+    "Refresh models": "重新取得模型"
+  },
+  "Regenerate": {
+    "Regenerate": "重新生成"
+  },
+  "Remote servers speak streamable HTTP, so nothing runs on this machine. Leave this empty to launch a local command instead.": {
+    "Remote servers speak streamable HTTP, so nothing runs on this machine. Leave this empty to launch a local command instead.": "遠端伺服器走 streamable HTTP，這台機器不會啟動任何程式。留空則改為啟動本機指令。"
+  },
+  "Remove": {
+    "Remove": "移除"
+  },
+  "Remove \"%1\"?": {
+    "Remove \"%1\"?": "移除「%1」？"
+  },
+  "Rename": {
+    "Rename": "重新命名"
+  },
+  "Reply failed · %1": {
+    "Reply failed · %1": "回覆失敗 · %1"
+  },
+  "Reply finished.": {
+    "Reply finished.": "回覆完成。"
+  },
+  "Restart": {
+    "Restart": "重啟"
+  },
+  "Restart required": {
+    "Restart required": "需要重啟"
+  },
+  "Restore": {
+    "Restore": "還原"
+  },
+  "Review changes": {
+    "Review changes": "檢視變更"
+  },
+  "Ripple effects": {
+    "Ripple effects": "漣漪效果"
+  },
+  "Run shell commands. Off removes the bash tool.": {
+    "Run shell commands. Off removes the bash tool.": "執行 shell 指令。關掉就沒有 bash 工具。"
+  },
+  "Running · %1 tools": {
+    "Running · %1 tools": "執行中 · %1 個工具"
+  },
+  "Running · 1 tool": {
+    "Running · 1 tool": "執行中 · 1 個工具"
+  },
+  "Running…": {
+    "Running…": "執行中…"
+  },
+  "Saturation %1%, brightness %2%": {
+    "Saturation %1%, brightness %2%": "飽和度 %1%，亮度 %2%"
+  },
+  "Saturday": {
+    "Saturday": "週六"
+  },
+  "Save": {
+    "Save": "儲存"
+  },
+  "Save & regenerate": {
+    "Save & regenerate": "儲存並重新生成"
+  },
+  "Saved": {
+    "Saved": "已儲存"
+  },
+  "Saving…": {
+    "Saving…": "儲存中…"
+  },
+  "Scales the whole app. Takes effect after a restart.": {
+    "Scales the whole app. Takes effect after a restart.": "縮放整個應用程式，重啟後生效。"
+  },
+  "Schedule": {
+    "Schedule": "排程"
+  },
+  "Scheduled run finished.": {
+    "Scheduled run finished.": "排程任務執行完成。"
+  },
+  "Scheduled task": {
+    "Scheduled task": "排程任務"
+  },
+  "Scroll to top": {
+    "Scroll to top": "回到最上面"
+  },
+  "Search": {
+    "Search": "搜尋"
+  },
+  "Search all conversations": {
+    "Search all conversations": "搜尋所有對話"
+  },
+  "Search backend added": {
+    "Search backend added": "已新增搜尋後端"
+  },
+  "Search backends": {
+    "Search backends": "搜尋後端"
+  },
+  "Search failed": {
+    "Search failed": "搜尋失敗"
+  },
+  "Search for a location...": {
+    "Search for a location...": "搜尋位置…"
+  },
+  "Search results": {
+    "Search results": "搜尋結果"
+  },
+  "Search settings": {
+    "Search settings": "搜尋設定"
+  },
+  "Searching...": {
+    "Searching...": "搜尋中…"
+  },
+  "Searching…": {
+    "Searching…": "搜尋中…"
+  },
+  "Secondary": {
+    "Secondary": "次要"
+  },
+  "Select File": {
+    "Select File": "選擇檔案"
+  },
+  "Select agent-browser": {
+    "Select agent-browser": "選擇 agent-browser"
+  },
+  "Select theme file": {
+    "Select theme file": "選擇主題檔"
+  },
+  "Select time": {
+    "Select time": "選擇時間"
+  },
+  "Send": {
+    "Send": "送出"
+  },
+  "Separate arguments with spaces. Wrap one in double quotes if it contains spaces.": {
+    "Separate arguments with spaces. Wrap one in double quotes if it contains spaces.": "參數之間用空白分隔；本身含空白的參數請用雙引號包起來。"
+  },
+  "Server URL (remote)": {
+    "Server URL (remote)": "伺服器網址（遠端）"
+  },
+  "Sessions": {
+    "Sessions": "對話"
+  },
+  "Set by QT_SCALE_FACTOR.": {
+    "Set by QT_SCALE_FACTOR.": "由 QT_SCALE_FACTOR 決定。"
+  },
+  "Settings": {
+    "Settings": "設定"
+  },
+  "Shape": {
+    "Shape": "形狀"
+  },
+  "Shell": {
+    "Shell": "Shell"
+  },
+  "Shell command": {
+    "Shell command": "Shell 指令"
+  },
+  "Show Dux Code in the system tray.": {
+    "Show Dux Code in the system tray.": "在系統匣顯示 Dux Code。"
+  },
+  "Show a system notification when something fails.": {
+    "Show a system notification when something fails.": "出錯時跳系統通知。"
+  },
+  "Show a system notification when the agent finishes or needs attention.": {
+    "Show a system notification when the agent finishes or needs attention.": "代理完成或需要你注意時跳系統通知。"
+  },
+  "Show a system notification when the agent needs permission.": {
+    "Show a system notification when the agent needs permission.": "代理需要權限時跳系統通知。"
+  },
+  "Show hidden files": {
+    "Show hidden files": "顯示隱藏檔案"
+  },
+  "Show password": {
+    "Show password": "顯示密碼"
+  },
+  "Show the question": {
+    "Show the question": "顯示問題"
+  },
+  "Show tray icon": {
+    "Show tray icon": "顯示系統匣圖示"
+  },
+  "Skills, MCP and tools": {
+    "Skills, MCP and tools": "技能、MCP 與工具"
+  },
+  "Skills, MCP servers and the tools the agent is allowed to use.": {
+    "Skills, MCP servers and the tools the agent is allowed to use.": "技能、MCP 伺服器，以及代理可以用哪些工具。"
+  },
+  "Skip — you decide": {
+    "Skip — you decide": "略過，你自己決定"
+  },
+  "Smart rename": {
+    "Smart rename": "自動命名"
+  },
+  "Smart rename failed.": {
+    "Smart rename failed.": "自動命名失敗。"
+  },
+  "Smooth": {
+    "Smooth": "平滑"
+  },
+  "Sound": {
+    "Sound": "音效"
+  },
+  "Spacious": {
+    "Spacious": "寬鬆"
+  },
+  "Spring": {
+    "Spring": "彈簧"
+  },
+  "Square": {
+    "Square": "方角"
+  },
+  "Start at login": {
+    "Start at login": "登入時啟動"
+  },
+  "Starting…": {
+    "Starting…": "啟動中…"
+  },
+  "Status": {
+    "Status": "狀態"
+  },
+  "Stopped": {
+    "Stopped": "未執行"
+  },
+  "Summary of %1 earlier messages": {
+    "Summary of %1 earlier messages": "先前 %1 則訊息的摘要"
+  },
+  "Summary of 1 earlier message": {
+    "Summary of 1 earlier message": "先前 1 則訊息的摘要"
+  },
+  "Sunday": {
+    "Sunday": "週日"
+  },
+  "Switched off": {
+    "Switched off": "已停用"
+  },
+  "System": {
+    "System": "系統"
+  },
+  "System default": {
+    "System default": "跟隨系統"
+  },
+  "System notifications": {
+    "System notifications": "系統通知"
+  },
+  "System preference unavailable — using dark.": {
+    "System preference unavailable — using dark.": "讀不到系統偏好——先用深色。"
+  },
+  "Task added": {
+    "Task added": "已新增任務"
+  },
+  "Task saved": {
+    "Task saved": "已儲存任務"
+  },
+  "Tasks": {
+    "Tasks": "任務"
+  },
+  "Tasks run with no window open, so nobody can answer a permission prompt. With this off the task can only read; turn it on and it may write and run commands unattended.": {
+    "Tasks run with no window open, so nobody can answer a permission prompt. With this off the task can only read; turn it on and it may write and run commands unattended.": "任務執行時沒有視窗，沒人能回答權限詢問。關著時任務只能讀取；打開後它可以未經確認就寫檔、執行指令。"
+  },
+  "Test connection": {
+    "Test connection": "測試連線"
+  },
+  "Text color": {
+    "Text color": "文字色"
+  },
+  "That message is still being saved. Try again in a moment.": {
+    "That message is still being saved. Try again in a moment.": "該訊息還在儲存中，請稍後再試。"
+  },
+  "The agent loses web search if this was the only backend.": {
+    "The agent loses web search if this was the only backend.": "如果這是唯一的後端，代理就沒有網路搜尋了。"
+  },
+  "The provider searches on its own side, so the local web_search tool is not offered. This is billed per search.": {
+    "The provider searches on its own side, so the local web_search tool is not offered. This is billed per search.": "由服務商自己搜尋，所以不會提供本機的 web_search 工具。這會按次計費。"
+  },
+  "The run stopped with an error.": {
+    "The run stopped with an error.": "執行途中出錯停了。"
+  },
+  "Theme": {
+    "Theme": "主題"
+  },
+  "Theme, shape and motion": {
+    "Theme, shape and motion": "主題、形狀與動效"
+  },
+  "Thickness": {
+    "Thickness": "粗細"
+  },
+  "Thinking…": {
+    "Thinking…": "思考中…"
+  },
+  "This folder could not be opened": {
+    "This folder could not be opened": "打不開這個資料夾"
+  },
+  "This folder is empty": {
+    "This folder is empty": "這個資料夾是空的"
+  },
+  "This folder no longer exists": {
+    "This folder no longer exists": "這個資料夾已經不在了"
+  },
+  "This item already exists": {
+    "This item already exists": "這個項目已經存在"
+  },
+  "This item cannot be moved here directly": {
+    "This item cannot be moved here directly": "這個項目沒辦法直接移到這裡"
+  },
+  "This item could not be handled": {
+    "This item could not be handled": "處理不了這個項目"
+  },
+  "This item is in use": {
+    "This item is in use": "這個項目正在使用中"
+  },
+  "This item no longer exists": {
+    "This item no longer exists": "這個項目已經不在了"
+  },
+  "This model cannot read that much, so compaction actually happens at %1.": {
+    "This model cannot read that much, so compaction actually happens at %1.": "此模型讀不了那麼多，因此實際上會在 %1 時壓縮。"
+  },
+  "This model takes at most %1 tokens, so that is what gets sent.": {
+    "This model takes at most %1 tokens, so that is what gets sent.": "此模型單次最多輸出 %1 個 token，因此實際送出的就是這個上限。"
+  },
+  "This model takes at most %1 tokens.": {
+    "This model takes at most %1 tokens.": "此模型單次最多輸出 %1 個 token。"
+  },
+  "This month": {
+    "This month": "本月"
+  },
+  "This week": {
+    "This week": "本週"
+  },
+  "Thought": {
+    "Thought": "思考"
+  },
+  "Thursday": {
+    "Thursday": "週四"
+  },
+  "Time (HH:MM)": {
+    "Time (HH:MM)": "時間（HH:MM）"
+  },
+  "Title bars": {
+    "Title bars": "標題列"
+  },
+  "Today": {
+    "Today": "今天"
+  },
+  "Toggle sidebar": {
+    "Toggle sidebar": "收合側欄"
+  },
+  "Tool": {
+    "Tool": "工具"
+  },
+  "Tool rounds per reply. At the limit the last round runs without tools.": {
+    "Tool rounds per reply. At the limit the last round runs without tools.": "單次回覆最多幾輪工具。到達上限後最後一輪不給工具。"
+  },
+  "Tool steps per reply": {
+    "Tool steps per reply": "單次工具呼叫次數上限"
+  },
+  "Tuesday": {
+    "Tuesday": "週二"
+  },
+  "Turn it back on with the globe button next to the composer.": {
+    "Turn it back on with the globe button next to the composer.": "用輸入欄旁邊的地球按鈕把它打開。"
+  },
+  "Turning this off stops the server but keeps its settings.": {
+    "Turning this off stops the server but keeps its settings.": "關掉只會停止這個伺服器，設定會留著。"
+  },
+  "Type to search every conversation.": {
+    "Type to search every conversation.": "打字就能搜尋所有對話。"
+  },
+  "Typography": {
+    "Typography": "字型"
+  },
+  "Unknown error": {
+    "Unknown error": "未知錯誤"
+  },
+  "Unpin": {
+    "Unpin": "取消釘選"
+  },
+  "Untitled": {
+    "Untitled": "未命名"
+  },
+  "Use PATH": {
+    "Use PATH": "改用 PATH"
+  },
+  "Use a bundled color palette.": {
+    "Use a bundled color palette.": "使用內建調色盤。"
+  },
+  "Use default": {
+    "Use default": "用預設"
+  },
+  "Use the model's built-in search": {
+    "Use the model's built-in search": "使用模型內建搜尋"
+  },
+  "Use this backend": {
+    "Use this backend": "改用這個後端"
+  },
+  "Use this folder": {
+    "Use this folder": "用這個資料夾"
+  },
+  "Using Dux Shell dynamic colors.": {
+    "Using Dux Shell dynamic colors.": "使用 Dux Shell 動態配色。"
+  },
+  "Using Matugen colors.": {
+    "Using Matugen colors.": "使用 Matugen 配色。"
+  },
+  "Version": {
+    "Version": "版本"
+  },
+  "Version and links": {
+    "Version and links": "版本與連結"
+  },
+  "Web access": {
+    "Web access": "聯網"
+  },
+  "Web access is off — no search, fetching or browser for this and later messages": {
+    "Web access is off — no search, fetching or browser for this and later messages": "聯網已關——這則與之後的訊息都不會搜尋、抓取頁面或開瀏覽器"
+  },
+  "Web access is on — page fetching and the browser only (no search backend yet)": {
+    "Web access is on — page fetching and the browser only (no search backend yet)": "聯網已開——只有抓取頁面與瀏覽器（還沒設定搜尋後端）"
+  },
+  "Web access is on — search, page fetching and the browser": {
+    "Web access is on — search, page fetching and the browser": "聯網已開——搜尋、抓取頁面與瀏覽器都可用"
+  },
+  "Web search": {
+    "Web search": "網頁搜尋"
+  },
+  "Web search is switched off": {
+    "Web search is switched off": "聯網搜尋目前是關的"
+  },
+  "Wednesday": {
+    "Wednesday": "週三"
+  },
+  "Weekday": {
+    "Weekday": "星期"
+  },
+  "Weight": {
+    "Weight": "字重"
+  },
+  "What should it do? This is sent as the first message.": {
+    "What should it do? This is sent as the first message.": "要做什麼？這段會當成第一則訊息送出去。"
+  },
+  "What the window's close button does.": {
+    "What the window's close button does.": "視窗關閉鈕按下後要做什麼。"
+  },
+  "Where the models come from. Keys stay on this machine.": {
+    "Where the models come from. Keys stay on this machine.": "模型從哪裡來。key 只留在這台機器。"
+  },
+  "Whether tool calls need approval. Inside the workspace, shell commands also run sandboxed.": {
+    "Whether tool calls need approval. Inside the workspace, shell commands also run sandboxed.": "工具呼叫要不要先等你同意。「工作目錄內」也會把指令放進沙箱。"
+  },
+  "Whether tool calls need approval. No sandbox here, so a command can still write anywhere.": {
+    "Whether tool calls need approval. No sandbox here, so a command can still write anywhere.": "工具呼叫要不要先等你同意。這台機器沒有沙箱，指令還是能寫到任何地方。"
+  },
+  "Windows": {
+    "Windows": "視窗"
+  },
+  "Working": {
+    "Working": "執行中"
+  },
+  "Working directory": {
+    "Working directory": "工作目錄"
+  },
+  "You": {
+    "You": "你"
+  },
+  "You do not have permission to do this": {
+    "You do not have permission to do this": "你沒有權限做這件事"
+  },
+  "You do not have permission to view this folder": {
+    "You do not have permission to view this folder": "你沒有權限看這個資料夾"
+  },
+  "Zoom": {
+    "Zoom": "縮放"
+  },
+  "accessibility animation": {
+    "accessibility animation": "無障礙 動畫"
+  },
+  "agent-browser": {
+    "agent-browser": "agent-browser"
+  },
+  "autostart boot startup": {
+    "autostart boot startup": "開機 自動啟動 啟動"
+  },
+  "cards panes contrast": {
+    "cards panes contrast": "卡片 面板 對比"
+  },
+  "click feedback animation": {
+    "click feedback animation": "點擊 回饋 動畫"
+  },
+  "compaction summary context threshold": {
+    "compaction summary context threshold": "壓縮 摘要 上下文 門檻"
+  },
+  "dark": {
+    "dark": "深色"
+  },
+  "dark light mode scheme": {
+    "dark light mode scheme": "深色 淺色 模式 配色"
+  },
+  "decorations csd header": {
+    "decorations csd header": "視窗裝飾 標題列"
+  },
+  "done": {
+    "done": "完成"
+  },
+  "e.g. GitHub": {
+    "e.g. GitHub": "例如 GitHub"
+  },
+  "e.g. Ollama on this machine": {
+    "e.g. Ollama on this machine": "例如：本機的 Ollama"
+  },
+  "frosted glass compositor effect": {
+    "frosted glass compositor effect": "毛玻璃 模糊 合成器 效果"
+  },
+  "generating": {
+    "generating": "產生中"
+  },
+  "light": {
+    "light": "淺色"
+  },
+  "loop steps limit fuse": {
+    "loop steps limit fuse": "迴圈 步數 上限"
+  },
+  "outline keyboard accessibility": {
+    "outline keyboard accessibility": "外框 鍵盤 無障礙"
+  },
+  "palette accent colors": {
+    "palette accent colors": "調色盤 強調色 顏色"
+  },
+  "permissions approval sandbox trust": {
+    "permissions approval sandbox trust": "權限 核准 沙箱 信任"
+  },
+  "quit exit hide tray": {
+    "quit exit hide tray": "離開 結束 隱藏 系統匣"
+  },
+  "running…": {
+    "running…": "執行中…"
+  },
+  "sandbox permissions files read write": {
+    "sandbox permissions files read write": "沙箱 權限 檔案 讀取 寫入"
+  },
+  "spacing compact spacious padding rows": {
+    "spacing compact spacious padding rows": "間距 緊湊 寬鬆 內距 列"
+  },
+  "tokens max_tokens reply length cap": {
+    "tokens max_tokens reply length cap": "token 上限 長度 回覆"
+  },
+  "transparency translucent glass": {
+    "transparency translucent glass": "透明 半透明 玻璃"
+  },
+  "tray indicator": {
+    "tray indicator": "系統匣 圖示"
+  },
+  "typography family fonts": {
+    "typography family fonts": "字型 字體 家族"
+  },
+  "waiting for your answer": {
+    "waiting for your answer": "等待你的回答"
+  },
+  "zoom text size": {
+    "zoom text size": "縮放 文字 大小"
+  },
+  "zoom ui size": {
+    "zoom ui size": "縮放 介面 大小"
+  }
+}
