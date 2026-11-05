@@ -189,13 +189,15 @@ Item {
                 };
             }
         }
-        reasoningBlocks = list;
+        reasoningBlocks = Blockizer.groupProse(list);
         reasoningRev++;
     }
 
     function reparse() {
         try {
-            blocks = Blockizer.parse(rawText);
+            // Prose becomes one block per run, so the whole run lives in a single TextEdit and a
+            // selection can cross paragraph, heading and list boundaries.
+            blocks = Blockizer.groupProse(Blockizer.parse(rawText));
         } catch (e) {
             blocks = [{ type: "p", text: rawText }];
         }
@@ -475,8 +477,9 @@ Item {
                         blk: blockWrap.blk
                     }
 
-                    // Per-paragraph copy: without a browser there is no multi-line selection, so
-                    // this is the only way to take one paragraph.
+                    // Copy without aiming at all: a prose run is now one TextEdit and can be
+                    // selected freely, so this is a shortcut for the section under the cursor
+                    // rather than the only way to take more than one line.
                     CopyButton {
                         visible: blockHover.hovered && blockWrap.blk && blockWrap.blk.type !== "code"
                         anchors.right: parent.right
@@ -484,7 +487,13 @@ Item {
                         anchors.bottomMargin: -Theme.spacingXS
                         // Sits on top of the text, so it needs a background to stay visible.
                         variant: "tonal"
-                        copyText: blockWrap.blk ? (blockWrap.blk.text || blockWrap.blk.code || "") : ""
+                        // A prose run has no single .text: lists and quotes carry their content in
+                        // parts, so the Markdown they came from is rebuilt instead.
+                        copyText: blockWrap.blk
+                            ? (blockWrap.blk.type === "code"
+                                ? (blockWrap.blk.code || "")
+                                : Blockizer.proseCopy(blockWrap.blk))
+                            : ""
                         Accessible.name: I18n.tr("Copy this block", "message action: copy one paragraph")
                     }
 

@@ -3,7 +3,16 @@ import qs.Common
 import qs.DCommon.Common
 import "../../Common/Blockizer.js" as Blockizer
 
-// Paragraphs, headings, lists and quotes go through Qt's MarkdownText (bold, italic, inline code, links).
+// A run of prose — paragraphs, headings, lists and quotes — in ONE TextEdit.
+//
+// One TextEdit per block (what this used to be) meant a selection could never leave the block it
+// started in, and copying an answer meant copying it a paragraph at a time. Grouping the run fixes
+// that: Qt's own selection now spans the whole thing, with no custom selection code and no extra
+// C++.
+//
+// RichText rather than MarkdownText so every size and colour comes from Theme. Qt's Markdown importer
+// scales headings 2x / 1.5x / 1.1875x off the body font, which has nothing to do with this design's
+// 20 / 16 / 15.
 TextEdit {
     id: root
 
@@ -11,36 +20,66 @@ TextEdit {
     // Inside thinking blocks: secondary color and one size smaller, so the answer keeps focus.
     property bool muted: false
 
-    readonly property string kind: (blk && blk.type) ? blk.type : "p"
-    readonly property bool isHeading: kind === "h1" || kind === "h2" || kind === "h3"
+    // What Blockizer.toHtml needs to build the paragraph styles. Read from Theme here rather than in
+    // the .js, which has no access to QML singletons.
+    readonly property var proseStyle: ({
+        "base": muted ? Theme.fontSizeSmall : Math.round(Theme.fontSizeMedium * 1.02),
+        "h1": muted ? Theme.fontSizeMedium + 1 : Theme.fontSizeXLarge,
+        "h2": muted ? Theme.fontSizeMedium : Theme.fontSizeLarge,
+        "h3": muted ? Theme.fontSizeMedium : Theme.fontSizeMedium + 1,
+        "font": Theme.fontFamily,
+        "mono": Theme.monoFontFamily,
+        "text": muted ? Theme.surfaceVariantText : Theme.surfaceText,
+        "quote": Theme.surfaceVariantText,
+        "codeBg": Theme.surfaceContainerHigh,
+        "codeFg": Theme.surfaceText,
+        // Column spacing between blocks is spacingM; inside one TextEdit that gap has to be a margin.
+        "gap": Theme.spacingM,
+        // A heading used to add spacingS of top padding on top of the column gap.
+        "headGap": Theme.spacingS,
+        "quoteIndent": Theme.spacingM
+    })
 
     width: parent ? parent.width : 0
     readOnly: true
     selectByMouse: true
     persistentSelection: true
-    textFormat: TextEdit.MarkdownText
+    textFormat: TextEdit.RichText
     wrapMode: TextEdit.Wrap
-    text: Blockizer.toMarkdown(blk)
+
+    // Assigned, never bound.
+    //
+    // Qt re-parses the whole rich text on every assignment even when the string is identical (measured
+    // at ~3.8 ms for a 20 KB answer), and a re-parse also drops the selection. Streaming rebuilds the
+    // block list on every delta, so a binding would re-assign all of this text many times a second —
+    // which would both cost the layout and wipe out a selection the user is dragging across a reply
+    // that is still arriving. Generating the HTML is cheap; assigning it is not.
+    text: ""
+    property string _shown: ""
+
+    function _refresh() {
+        const html = Blockizer.toHtml(blk, proseStyle);
+        if (html === _shown)
+            return;
+        _shown = html;
+        text = html;
+    }
+
+    onBlkChanged: _refresh()
+    onProseStyleChanged: _refresh()
+    Component.onCompleted: _refresh()
 
     leftPadding: 0
     rightPadding: 0
-    topPadding: isHeading ? Theme.spacingS : 0
+    topPadding: 0
     bottomPadding: 0
 
-    color: muted || kind === "quote" ? Theme.surfaceVariantText : Theme.surfaceText
+    color: muted ? Theme.surfaceVariantText : Theme.surfaceText
     selectionColor: Theme.primary
     selectedTextColor: Theme.primaryText
     renderType: Text.NativeRendering
     font.family: Theme.fontFamily
-    font.pixelSize: {
-        if (muted)
-            return isHeading ? Theme.fontSizeMedium + (kind === "h1" ? 1 : 0) : Theme.fontSizeSmall;
-        return kind === "h1" ? Theme.fontSizeXLarge
-               : kind === "h2" ? Theme.fontSizeLarge
-               : kind === "h3" ? Theme.fontSizeMedium + 1
-               : Theme.fontSizeMedium * 1.02;
-    }
-    font.weight: isHeading ? Font.DemiBold : Theme.fontWeight
+    font.pixelSize: proseStyle.base
 
     // TextEdit.linkAt uses content coordinates, which exclude padding. Padding is 0 today; do not bake that assumption in.
     function linkUnder(x, y) {
@@ -60,7 +99,7 @@ TextEdit {
     }
 
     // --- clickable links ---
-    // MarkdownText paints [text](url) blue, but TextEdit has no linkActivated (that is Text).
+    // RichText paints linked text, but TextEdit has no linkActivated (that is Text).
     // A thin layer sits on top: press a link to open it, press elsewhere to let the event
     // through, so selection and double-click still work.
     MouseArea {
