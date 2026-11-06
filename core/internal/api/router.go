@@ -186,9 +186,11 @@ func route(_ context.Context, w *ipc.Writer, req ipc.Request, sub *ipc.Subscribe
 		// an empty bubble until it ends. runningText runningReasoning carry what that step has written
 		// so far; both are empty when nothing is running.
 		runningText, runningReasoning := deps.Agent.RunningText(id)
+		startedAt, _ := deps.Agent.StartedAt(id)
 		w.Respond(req.ID, map[string]any{
 			"session":          sess,
 			"busy":             deps.Agent.Busy(id),
+			"startedAt":        startedAt,
 			"runningText":      runningText,
 			"runningReasoning": runningReasoning,
 		})
@@ -1449,9 +1451,21 @@ func listSessions(deps Deps) []map[string]any {
 			"messageCount": len(s.Messages),
 			"preview":      previewOf(s),
 			"busy":         deps.Agent.Busy(s.ID),
+			// 0 when nothing is running. The sidebar's elapsed counter reads this rather than
+			// remembering when it first noticed the session was busy.
+			"startedAt": startedAtOf(deps, s.ID),
 		})
 	}
 	return out
+}
+
+// startedAtOf is the run start of a busy session, 0 when it is idle.
+func startedAtOf(deps Deps, id string) int64 {
+	at, ok := deps.Agent.StartedAt(id)
+	if !ok {
+		return 0
+	}
+	return at
 }
 
 // previewOf takes the start of the last message for the sidebar's second line.

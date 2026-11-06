@@ -238,6 +238,23 @@ func (r *Runner) Busy(sessionID string) bool {
 	return false
 }
 
+// StartedAt reports when the run in flight for this session began, as Unix milliseconds, and whether
+// there is one.
+//
+// The UI has to show how long a reply has been going. It cannot count that itself: a window that opens
+// mid-reply, or one whose user looks at another conversation and comes back, would start from zero and
+// claim a turn had just begun. The daemon ran it, so the daemon says when.
+func (r *Runner) StartedAt(sessionID string) (int64, bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, rn := range r.runs {
+		if rn.sessionID == sessionID {
+			return rn.startedAt.UnixMilli(), true
+		}
+	}
+	return 0, false
+}
+
 // RunningText reports the step a session is writing right now: the text and the thinking that the
 // transcript does not have yet, because neither is persisted until the step ends.
 //
@@ -363,6 +380,9 @@ func (r *Runner) newRun(sessionID string, resolved config.Resolved, env tools.En
 		"sessionId": sessionID,
 		"model":     resolved.ID,
 		"reasoning": rn.reasoning,
+		// The UI starts its elapsed counter from this, so a window that joins late still shows the
+		// turn's real age rather than the age of its own subscription.
+		"startedAt": rn.startedAt.UnixMilli(),
 	})
 
 	rn.ctx = ctx

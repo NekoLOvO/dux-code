@@ -181,20 +181,16 @@ fixed delay — a load issued before the socket is up fails silently and reports
   pass applied before it is held, or `[**bold**](url)` draws its asterisks.
 - **A model question can be put aside, and only another question brings it back.** The dialog is modal
   and the daemon is blocked inside the tool call until it gets an answer, so "hide" cannot mean
-  "dismiss" — that is what Skip does, and it changes the conversation. `QuestionDialog.minimize()`
-  closes the window and sets `Chat.questionHidden`; the question stays pending. The way back is a
-  button **inside the ask_user tool card**, below its body and deliberately outside `toolExpanded`:
-  that body follows the display setting, and a folded card would hide the only route back to a dialog
-  the daemon is still blocked on. It is not in the composer because a half-screen tiling layout makes
-  that row the scarcest space in the window. No id plumbing is needed to find the right card — the
-  daemon publishes `tool.finished` only after the answer, so the blocked call stays `running`. The
-  dialog keeps owning itself (it listens for `Chat.questionRestoreRequested` the way it already
-  listens to `Backend`), so nothing has to reach into it. A *new* question clears the flag, or a
-  leftover from the previous one would hide a question the user has never seen. The button also asks
-  that a question is still pending, and `Chat._settle` marks every tool of a finished run not running:
-  a turn cancelled at the question, or a question voided with the connection, would otherwise leave
-  the card spinning and offer a way back to a dialog nothing is waiting on. Esc is still Skip —
-  different decisions, and the buttons say so.
+  "dismiss" — that is Skip, and it changes the conversation. `QuestionDialog.minimize()` closes the
+  window and sets `Chat.questionHidden`; the question stays pending, and the way back is a button
+  **inside the ask_user tool card**, outside `toolExpanded` (a folded card would hide the only route
+  back to a dialog the daemon is still blocked on) and not in the composer (a half-screen tiling
+  layout makes that row the scarcest space). No id plumbing: the daemon publishes `tool.finished` only
+  after the answer, so the blocked call stays `running`. The dialog owns itself, listening for
+  `Chat.questionRestoreRequested` as it already listens to `Backend`. A *new* question clears the flag,
+  and `Chat._settle` marks every tool of a finished run not running — otherwise a turn cancelled at
+  the question leaves the card spinning and offers a way back to a dialog nothing waits on. Esc is
+  still Skip; different decisions, and the buttons say so.
 - **Every turn belongs to the daemon, so leaving a session detaches from it — never cancels it.**
   Only the streaming state ever lived in the QML process, so a hot reload (or a fresh `dcode ui`) left
   a composer saying "send" while text was still arriving, because every event was dropped at the
@@ -207,6 +203,15 @@ fixed delay — a load issued before the socket is up fails silently and reports
   re-adopts (the daemon is still writing); a stop before any event named a runId goes through
   `chat.cancelSession`, since there is no id to cancel; and because "busy" is a snapshot, a turn that
   ends in between would spin forever, so one `session.get` 1.5s later settles it.
+- **A running turn's age comes from the daemon, and it is per session.** The sidebar pill counted
+  with one global `busySince` that only followed the *active* session, so looking at another
+  conversation froze the number and coming back restarted it at 0s. `Runner.StartedAt` reports the
+  run's start (in `run.started`, `session.list` and `session.get`) and `Sessions.runStarts` maps
+  session → start; `elapsedFor(id)` reads a `clockTick` it can be re-evaluated by, so every busy row
+  counts on its own. Merged with `Math.min`, never rebuilt: a list reply can be older than the
+  `run.started` event it races, and taking the start back is exactly the "restart at 1s" bug. The
+  per-message badge uses the same number when a turn is adopted, instead of pretending the turn
+  began when the window noticed.
 - **The step in flight is not in the transcript, so `session.get` carries it.** "Only finished content
   is written" left a returning window with the user message and an empty bubble until
   `run.finished`. `Runner.RunningText` holds the current *attempt*'s text and thinking (reset by
@@ -320,22 +325,18 @@ fixed delay — a load issued before the socket is up fails silently and reports
   otherwise be silently rewritten on every start. Under `system` the three family dropdowns are
   hidden: `FontSource` maps it to `Fonts.system` / `Fonts.systemMono` / the bundled DM Serif, so a
   chosen family would be a control with no effect. Weight and scale still apply in all three modes.
-- **The appearance page changes things, not just settings.** Three rows there are only worth having
-  because the plumbing reaches the windows: `density` → `Theme.densityLevel` → `SettingsMetrics` (and
-  `Style`, which reads the same level for control heights); `floatingWindowTransparency` →
-  `Theme.windowSurface`, which every `FloatingWindow` paints with and sets `surfaceFormat.opaque:
-  false` for; and `blurEnabled` → `Theme.blurLayersActive` → `WindowBlur`. A new window must use
-  `Theme.windowSurface` and carry a `WindowBlur`, or the opacity and blur settings silently do nothing
-  in it. `blurLayersActive` has no probe process here — without the compositor protocol it is a silent
-  no-op, so the toggle is what gates it and the description says so.
-- **A translated term is keyed by its English text, not by its context.** `translations/poexports/<locale>.json`
-  is a flat `{english: translation}` map (`write_locale`), so the context in `I18n.tr("Scale", "…")` is
-  documentation for translators and nothing more. Two rows that reuse the same English word share one
-  translation — which is fine, and saves work, when they mean the same thing (`Off`, `On`, `Remove`,
-  `Theme`), and wrong only when the two places need to read differently. That is why the appearance
-  page says "Interface scale" and "Font scale" instead of "Scale" twice: with one shared slot, both
-  would have rendered with the same word. If two places genuinely need different translations, word them
-  differently; do not add context support to the loader for it.
+- **The appearance page changes things, not just settings.** `density` → `Theme.densityLevel` →
+  `SettingsMetrics` (and `Style`, which reads the same level for control heights);
+  `floatingWindowTransparency` → `Theme.windowSurface`; `blurEnabled` → `Theme.blurLayersActive` →
+  `WindowBlur`. A new window must use `Theme.windowSurface` and carry a `WindowBlur`, or those two
+  settings silently do nothing in it. `blurLayersActive` has no probe process — without the compositor
+  protocol it is a silent no-op — so the toggle is what gates it, and the description says so.
+- **A translated term is keyed by its English text, not by its context.** `poexports/<locale>.json` is a
+  flat `{english: translation}` map, so the context in `I18n.tr("Scale", "…")` documents intent for
+  translators and nothing more: two rows reusing a word share one translation. Usually fine (`Off`,
+  `On`, `Remove`), wrong only where the two places must read differently — which is why the appearance
+  page says "Interface scale" and "Font scale" rather than "Scale" twice. Word them differently; do
+  not add context support to the loader.
 - **The settings search lives in the sidebar, not in the page.** The field is the first child of
   `SettingsSidebar`'s nav column (above the tabs, like dux-files), and the sidebar owns the text;
   `SettingsContent.searchQuery` is bound to it, and the content pane renders the hits as a
@@ -352,8 +353,8 @@ fixed delay — a load issued before the socket is up fails silently and reports
   re-asks itself (bounded) and waits for `I18n.translationsLoaded`. Rows are translated by then, so
   `I18n.englishFor()` is what lets an English query match a Chinese UI; `keywords` on `SettingsRow`
   covers wording nobody would type ("frosted" for background blur).
-- Settings dropdowns must keep values that are outside their list visible — otherwise the next click
-  silently overwrites a hand-edited config.
+- Settings dropdowns must keep values outside their list visible, or the next click silently
+  overwrites a hand-edited config.
 - `Backend.qml:_applyConfig` must not filter falsy values (`> 0`); 0 is meaningful now.
 - Tool output is truncated per message (32 KB / 2000 lines, head + tail) before it reaches the model.
   That is not the context limit and does not trigger compaction.

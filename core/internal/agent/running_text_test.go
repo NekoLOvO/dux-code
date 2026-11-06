@@ -251,3 +251,56 @@ func TestRunningTextAndBusyAgree(t *testing.T) {
 		t.Fatalf("a new attempt did not clear the buffers: %q, %q", text, reasoning)
 	}
 }
+
+// The sidebar's elapsed counter is the daemon's number, not the window's: a window that joins a turn
+// already in progress has to show the turn's real age, or coming back from another conversation
+// restarts the counter at 0s.
+func TestStartedAtReportsTheRunBegin(t *testing.T) {
+	cfg := configWithProvider(t, 0, 0)
+	srv, started := slowStream([]string{"a", " b", " c"}, 80*time.Millisecond)
+	defer srv.Close()
+	applyTestProvider(t, cfg, srv.URL)
+
+	r, sid, _ := newTestRunner(t, cfg)
+	if err := r.store.MarkSmartNamed(sid); err != nil {
+		t.Fatal(err)
+	}
+	if at, ok := r.StartedAt(sid); ok || at != 0 {
+		t.Fatalf("an idle session reports a start: %d, %v", at, ok)
+	}
+
+	before := time.Now().UnixMilli()
+	runID, _, err := r.Send(sid, "go", "fake:m", "", nil, tools.Env{Approval: tools.ApprovalAuto})
+	if err != nil {
+		t.Fatal(err)
+	}
+	<-started
+
+	r.mu.Lock()
+	rn := r.runs[runID]
+	r.mu.Unlock()
+	if rn == nil {
+		t.Fatal("the run is not registered")
+	}
+	defer func() {
+		select {
+		case <-rn.done:
+		case <-time.After(10 * time.Second):
+			t.Fatal("the turn never finished")
+		}
+	}()
+
+	at, ok := r.StartedAt(sid)
+	if !ok {
+		t.Fatal("a running session reports no start")
+	}
+	// It is the run's own start, so it sits between "just before Send" and now — and it does not move
+	// as the turn goes on, which is what lets a window that joins late show the real age.
+	if at < before || at > time.Now().UnixMilli() {
+		t.Fatalf("start %d is outside [%d, now]", at, before)
+	}
+	again, _ := r.StartedAt(sid)
+	if again != at {
+		t.Fatalf("the start moved: %d then %d", at, again)
+	}
+}

@@ -296,6 +296,7 @@ QtObject {
         // prefix behind for the next adopt to seed a bubble with.
         _pendingRunningText = ""
         _pendingRunningReasoning = ""
+        _pendingStartedAt = 0
         pendingUserRow = -1
         activeRunId = ""
         liveIndex = -1
@@ -339,6 +340,7 @@ QtObject {
             _pendingBusy = res.busy === true
             _pendingRunningText = res.runningText || ""
             _pendingRunningReasoning = res.runningReasoning || ""
+            _pendingStartedAt = res.startedAt || 0
             // The daemon keeps the running total (and recovers it for files written before it
             // existed), so opening a session shows its spend without replaying a single turn.
             const tu = res.session.totalUsage
@@ -477,6 +479,8 @@ QtObject {
     property bool _pendingBusy: false
     property string _pendingRunningText: ""
     property string _pendingRunningReasoning: ""
+    // Epoch ms of the running turn's start, from the daemon; 0 when it is not running.
+    property double _pendingStartedAt: 0
 
     // Join a turn the daemon is already producing.
     //
@@ -489,10 +493,10 @@ QtObject {
         if (rid === "")
             return
         activeRunId = rid
-        // The daemon does not say when the turn began, and a time counted from now is the honest
-        // approximation: it is the part of the turn this window witnessed.
-        runStartedAt = Date.now()
-        runElapsedMs = 0
+        // The turn's real age, not the age of this window's subscription: the daemon ran it and reports
+        // when it began, so a reply that has been coming for a minute does not claim to be 1s old.
+        runStartedAt = _pendingStartedAt > 0 ? _pendingStartedAt : Date.now()
+        runElapsedMs = Math.max(0, Date.now() - runStartedAt)
         _newStep(rid)
         // Start the bubble with what the running step has already written. The persisted rows end at
         // the last finished step, so this prefix is not anywhere in the transcript — and the daemon
@@ -505,6 +509,7 @@ QtObject {
         }
         _pendingRunningText = ""
         _pendingRunningReasoning = ""
+        _pendingStartedAt = 0
     }
 
     // ---------- edit / regenerate / branch ----------

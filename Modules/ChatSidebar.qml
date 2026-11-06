@@ -561,7 +561,11 @@ Item {
                                     indent: Theme.iconSizeSmall + Theme.spacingXS + Theme.spacingM
                                     busy: modelData.busy === true
                                     showSpinner: modelData.busy === true
-                                    trailingText: modelData.busy === true ? Sessions.formatElapsed(Sessions.busyElapsedMs) : ""
+                                    // A running reply shows its own age, counted from the daemon's
+                                    // start time, so switching sessions does not restart it.
+                                    trailingText: modelData.busy === true
+                                        ? Sessions.formatElapsed(Sessions.elapsedFor(modelData.id))
+                                        : ""
                                     active: Sessions.activeId === modelData.id
                                     firstInGroup: index === 0
                                     lastInGroup: index === sessionRepeater.count - 1

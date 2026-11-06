@@ -20,15 +20,33 @@ Singleton {
     property var sessions: []
     property string activeId: ""
 
-    // Sidebar running indicator (single agent).
-    property double busySince: 0
-    property int busyElapsedMs: 0
+    // When each running session's turn began, epoch ms (0 or absent = idle).
+    //
+    // Per session, and taken from the daemon rather than from "when this window first noticed". The one
+    // shared counter this replaces froze the moment the user looked at another conversation (the ticker
+    // stopped with the active session) and restarted at 0 on the way back, so a reply could be two
+    // minutes old and the sidebar would say 1s.
+    property var runStarts: ({})
+
+    // Re-evaluation pulse for every elapsed label. The labels call elapsedFor(), which reads this, so a
+    // tick re-evaluates all of them at once — including sessions that are not the active one.
+    property int clockTick: 0
 
     readonly property Timer busyTicker: Timer {
         interval: 500
         repeat: true
-        running: root.busySince > 0
-        onTriggered: root.busyElapsedMs = Date.now() - root.busySince
+        // Only while something is running: an idle sidebar should not wake up twice a second.
+        running: root.anyBusy
+        onTriggered: root.clockTick++
+    }
+
+    // How long the session's turn has been going. 0 when it is not running.
+    function elapsedFor(id) {
+        root.clockTick; // dependency: the binding re-evaluates on every tick
+        const start = root.runStarts[id];
+        if (!start || start <= 0)
+            return 0;
+        return Math.max(0, Date.now() - start);
     }
 
     readonly property var activeSession: {
@@ -149,6 +167,28 @@ Singleton {
             }
             root.sessions = res.sessions || [];
 
+            // The list carries each running session's start time, which is the only source for a turn
+            // this window never saw begin: a fresh window, a reconnect, or a turn the CLI started.
+            //
+            // Merged, never rebuilt: a `run.started` event may already have reported a run this list
+            // was fetched before, and taking the start back would restart the counter at 0s. The earlier
+            // of the two wins, and an entry for a session that is no longer listed is forgotten.
+            let starts = {};
+            const known = root.runStarts || {};
+            for (let i = 0; i < root.sessions.length; i++) {
+                const s = root.sessions[i];
+                if (!s || !s.id)
+                    continue;
+                const prev = known[s.id] || 0;
+                if (s.busy === true) {
+                    if (s.startedAt > 0 && (prev === 0 || s.startedAt < prev))
+                        starts[s.id] = s.startedAt;
+                    else if (prev > 0)
+                        starts[s.id] = prev;
+                }
+            }
+            root.runStarts = starts;
+
             // Pick the first when the active one is gone.
             let found = false;
             for (let i = 0; i < root.sessions.length; i++) {
@@ -256,24 +296,38 @@ Singleton {
         sessions = next;
     }
 
-    // Sidebar busy indicator: follows the active session.
-    function syncBusy() {
-        const s = root.find(root.activeId);
-        const busy = s ? s.busy === true : false;
-        if (busy) {
-            if (root.busySince === 0) {
-                root.busySince = Date.now();
-                root.busyElapsedMs = 0;
-            }
-        } else {
-            root.busySince = 0;
+    // Note when a session's turn began, without ever shortening a known start: a session.list reply and
+    // a run.started event describe the same run, and the earlier fact wins.
+    function noteStart(id, startedAt) {
+        if (!id)
+            return;
+        const prev = root.runStarts[id] || 0;
+        if (startedAt > 0) {
+            if (prev === startedAt)
+                return;
+            const next = Object.assign({}, root.runStarts);
+            next[id] = startedAt;
+            root.runStarts = next;
+            return;
+        }
+        if (prev === 0)
+            return;
+        const next = Object.assign({}, root.runStarts);
+        delete next[id];
+        root.runStarts = next;
+    }
+
+    // Losing the connection means the events that would have ended a turn are gone, so a start time
+    // kept across the gap can outlive its run. The reload that follows reconnection fills them in.
+    readonly property Connections _linkState: Connections {
+        target: Backend
+        function onConnectionStateChanged() {
+            if (!Backend.connected)
+                root.runStarts = ({});
         }
     }
 
-    onActiveIdChanged: {
-        Chat.loadSession(activeId);
-        syncBusy();
-    }
+    onActiveIdChanged: Chat.loadSession(activeId)
 
     readonly property Connections _backendLink: Connections {
         target: Backend
@@ -297,12 +351,14 @@ Singleton {
                     "busy": true,
                     "messageCount": Math.max(1, cur ? (cur.messageCount || 0) : 0)
                 });
-                root.syncBusy();
+                // startedAt is the daemon's, so the counter shows the turn's real age from the first
+                // frame, even in a window that loaded after the turn began.
+                root.noteStart(sid, data.startedAt || 0);
             } else if (kind === "run.finished" || kind === "run.failed") {
                 root._patch(sid, {
                     "busy": false
                 });
-                root.syncBusy();
+                root.noteStart(sid, 0);
                 // The daemon may have just auto-named it.
                 root.reload();
             } else if (kind === "session.renamed") {
