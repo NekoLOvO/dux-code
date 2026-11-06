@@ -130,6 +130,10 @@ QtObject {
     // and scrolls to it, then clears this.
     property string archiveJump: ""
     signal jumpRequested(int index)
+    // Reveal the compaction seam. It is the first row after a fold, so this is "go to the top" rather
+    // than "jump to an index": ListView centres an index jump, which for row 0 lands above the
+    // content (a negative contentY and an empty band).
+    signal seamRevealRequested()
 
     function jumpTo(sessionId, messageId) {
         jumpTarget = messageId || "";
@@ -314,6 +318,19 @@ QtObject {
             pendingUserRow -= k
         messages.remove(0, k)
         compactionRow = 0
+        // Say so. The seam is the first row now, which puts the card at the very top of the
+        // transcript — thousands of pixels above a view that is following the reply, so a compaction
+        // that fired during a turn changed nothing on screen. Nothing else in the window indicates it.
+        // compaction.count, not k: k is rows, and a row merges several tool results, so the two numbers
+        // differ (371 rows were 635 messages here) and the card shows the message count.
+        ToastService.show(
+            I18n.tr("Folded %1 earlier messages into a summary.", "toast after compaction folded the earlier part of the conversation into the summary card").arg(compaction.count),
+            {
+                "actionLabel": I18n.tr("Show", "toast action: scroll to the compaction summary card"),
+                "action": function () {
+                    chat.seamRevealRequested();
+                }
+            });
     }
 
     // The cut point is a message id; the row is found by id because rows merge and drop messages.
@@ -554,10 +571,12 @@ QtObject {
     // Build the archive a chunk at a time, the way a load does: a long prefix is hundreds of rows, and
     // putting them all into the model in one turn of the event loop is what freezes the window.
     function buildArchive() {
-        // Not "nothing to build": a compaction that fired while this window was open folded rows into
-        // _queuedFolded without any _archivedMessages behind them, and returning here would leave the
-        // archive permanently empty.
         if (_archivedBuilt)
+            return
+        // Nothing to build *yet* is not "built": called before a load finishes (the card's tab can be
+        // clicked at any moment) setting the flag here would leave the archive permanently empty.
+        // A live fold with no _archivedMessages behind it still counts, via the queue.
+        if (_archivedMessages.length === 0 && _queuedFolded.length === 0)
             return
         _archivedBuilt = true
         var rows = _buildRows(_archivedMessages, 0, _archivedMessages.length, _archivedCallArgs)

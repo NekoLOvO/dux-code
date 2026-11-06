@@ -210,30 +210,41 @@ func (r *Runner) summarize(ctx context.Context, client llm.Client, model config.
 		parts[i], parts[j] = parts[j], parts[i]
 	}
 
-	res, err := client.Stream(ctx, llm.Request{
-		Model: model.Model,
-		System: "You compress conversations into a handover summary." +
-			" Keep: the user's goals and constraints, decisions already made and why, which files were touched, and what is still unfinished." +
-			" No pleasantries, no narrative of the process, no decoration beyond headings.",
-		Messages: []llm.Message{{
-			Role: llm.RoleUser,
-			Content: "Compress the conversation below into a summary of at most 400 words," +
-				" so someone who has not seen it can take over directly:\n\n" + strings.Join(parts, "\n\n"),
-		}},
-		MaxTokens: 900,
-	}, func(string) {})
-	// The summary is a request like any other and is billed. Nobody sees its usage in the transcript, so
-	// without this it would silently be missing from the session total.
-	if spendErr := r.store.Spend(sessionID, res.Usage.Input, res.Usage.Output); spendErr != nil {
-		applog.Warnf("failed to record usage of session %s: %v", sessionID, spendErr)
-	}
-	if err != nil {
-		return "", err
-	}
+	prompt := "Compress the conversation below into a summary of at most 400 words," +
+		" so someone who has not seen it can take over directly:\n\n" + strings.Join(parts, "\n\n")
 
-	out := strings.TrimSpace(res.Content)
-	if out == "" {
-		return "", fmt.Errorf("the summary is empty")
+	// Two attempts, because an empty answer is a retryable outcome rather than a verdict: a reasoning
+	// model can spend the whole budget thinking and return no content at all (measured: deepseek-flash
+	// used 900 output tokens on reasoning and emitted nothing). That failure used to be silent — the
+	// warning went to the daemon log and the transcript simply never gained its summary — so a turn
+	// that should have compacted did not, and the next one tried again from scratch.
+	for attempt := 0; attempt < 2; attempt++ {
+		res, err := client.Stream(ctx, llm.Request{
+			Model: model.Model,
+			System: "You compress conversations into a handover summary." +
+				" Keep: the user's goals and constraints, decisions already made and why, which files were touched, and what is still unfinished." +
+				" No pleasantries, no narrative of the process, no decoration beyond headings.",
+			Messages: []llm.Message{{
+				Role:    llm.RoleUser,
+				Content: prompt,
+			}},
+			// The budget has to cover reasoning *and* the answer. 900 was enough for the answer alone,
+			// which is why a reasoning model came back empty: it thought until the cap and stopped.
+			MaxTokens: 3000,
+		}, func(string) {})
+		// The summary is a request like any other and is billed. Nobody sees its usage in the
+		// transcript, so without this it would silently be missing from the session total.
+		if spendErr := r.store.Spend(sessionID, res.Usage.Input, res.Usage.Output); spendErr != nil {
+			applog.Warnf("failed to record usage of session %s: %v", sessionID, spendErr)
+		}
+		if err != nil {
+			return "", err
+		}
+		if out := strings.TrimSpace(res.Content); out != "" {
+			return out, nil
+		}
+		applog.Warnf("summary attempt %d for session %s came back empty (reasoning %d chars, stop %q); retrying",
+			attempt+1, sessionID, len(res.Reasoning), res.StopReason)
 	}
-	return out, nil
+	return "", fmt.Errorf("the summary is empty")
 }

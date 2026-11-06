@@ -323,3 +323,38 @@ func TestSentCostFallsBackWhenTheCutPointIsGone(t *testing.T) {
 		t.Errorf("the summary should replace the prefix, got %d against %d", got, whole)
 	}
 }
+
+// A reasoning model that spends the whole budget thinking returns no content. That is a retryable
+// outcome: without the second attempt the turn silently does not compact, which looks exactly like
+// compaction being broken.
+func TestSummarizeRetriesAnEmptyAnswer(t *testing.T) {
+	var summarizer emptyThenText
+	r, sid, _ := newTestRunner(t, nil)
+	r.store.Append(sid, store.Message{ID: "m1", Role: "user", Text: "hello", CreatedAt: 1})
+
+	out, err := r.summarize(context.Background(), &summarizer,
+		config.Resolved{ID: "fake:m", Model: "m"}, sid,
+		[]store.Message{{ID: "m1", Role: "user", Text: "hello"}})
+	if err != nil {
+		t.Fatalf("summarize: %v", err)
+	}
+	if out != "a real summary" {
+		t.Fatalf("got %q", out)
+	}
+	if summarizer.calls != 2 {
+		t.Fatalf("expected 2 attempts, got %d", summarizer.calls)
+	}
+}
+
+// emptyThenText answers with nothing first (a reasoning model out of budget) and text after.
+type emptyThenText struct{ calls int }
+
+func (e *emptyThenText) Stream(_ context.Context, _ llm.Request, onDelta llm.DeltaFunc) (llm.Result, error) {
+	e.calls++
+	if e.calls == 1 {
+		// The shape of the failure: tokens spent, reasoning produced, no content.
+		return llm.Result{Reasoning: "thinking...", StopReason: "length"}, nil
+	}
+	onDelta("a real summary")
+	return llm.Result{Content: "a real summary", StopReason: "stop"}, nil
+}

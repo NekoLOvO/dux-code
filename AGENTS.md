@@ -190,15 +190,11 @@ fixed delay — a load issued before the socket is up fails silently and reports
 - **A model question can be put aside, and only another question brings it back.** The dialog is modal
   and the daemon is blocked inside the tool call until it gets an answer, so "hide" cannot mean
   "dismiss" — that is Skip, and it changes the conversation. `QuestionDialog.minimize()` closes the
-  window and sets `Chat.questionHidden`; the question stays pending, and the way back is a button
-  **inside the ask_user tool card**, outside `toolExpanded` (a folded card would hide the only route
-  back to a dialog the daemon is still blocked on) and not in the composer (a half-screen tiling
-  layout makes that row the scarcest space). No id plumbing: the daemon publishes `tool.finished` only
-  after the answer, so the blocked call stays `running`. The dialog owns itself, listening for
-  `Chat.questionRestoreRequested` as it already listens to `Backend`. A *new* question clears the flag,
-  and `Chat._settle` marks every tool of a finished run not running — otherwise a turn cancelled at
-  the question leaves the card spinning and offers a way back to a dialog nothing waits on. Esc is
-  still Skip; different decisions, and the buttons say so.
+  window and sets `Chat.questionHidden`; the way back is a button **inside the ask_user tool card**,
+  outside `toolExpanded` (a folded card would hide the only route back to a dialog the daemon is still
+  blocked on) and not in the composer (a half-screen tiling layout makes that row the scarcest space).
+  The dialog owns itself; a *new* question clears the flag, and `Chat._settle` marks every tool of a
+  finished run not running, or a turn cancelled at the question leaves the card spinning.
 - **Every turn belongs to the daemon, so leaving a session detaches from it — never cancels it.**
   Only the streaming state ever lived in the QML process, so a hot reload (or a fresh `dcode ui`) left
   a composer saying "send" while text was still arriving, because every event was dropped at the
@@ -297,18 +293,23 @@ fixed delay — a load issued before the socket is up fails silently and reports
 - **The compacted prefix is folded, not rendered.** It is what the model no longer reads and most of a
   long session's rows: a 460-message session went from 460 rows to 60. `Chat.loadSession` builds rows
   from the cut; the card's second tab builds the rest on demand in `_loadChunk` chunks (400 rows:
-  ~600 ms) inside its own bounded list, so they stay virtualized. The card is not a row of its own — it
+  ~600 ms) in its own bounded list, so they stay virtualized. The card is not a row of its own — it
   rides on the first row still sent verbatim, so edit/regenerate addressing and the model's indices did
   not move. `_locateCompaction` falls back to row 0 only when the id is not found *and* the prefix is
-  folded: checked first, it pinned every later compaction to row 0, so a second one folded nothing.
-  `_foldAboveSeam` handles a compaction that fires mid-session (one `messages.remove(0, k)`, never a
-  per-row loop) and moves `liveIndex`/`pendingUserRow` with it. A search hit inside the fold sets
-  `Chat.archiveJump`: the card opens its archive and scrolls there. `count` is how many messages the
+  folded; checked first it pinned every later compaction to row 0. `_foldAboveSeam` folds a compaction
+  that fires mid-session (one `messages.remove(0, k)`) and moves `liveIndex`/`pendingUserRow` with it. A
+  search hit inside the fold sets `Chat.archiveJump`. **A live fold is invisible without help**: the
+  seam becomes row 0, ~70k px above a view that follows the reply, so the toast ("Folded N earlier
+  messages", action → `Chat.seamRevealRequested`) is the only thing that says it happened — and reveal
+  it with `scrollToTop`, not `jumpRequested(0)`, which ListView centres to a negative contentY.
+- **"The summary is empty" is a reasoning model out of budget, not a broken request.** `summarize` sent
+  `MaxTokens: 900`, which a reasoning model can spend entirely on thinking and then emit no content —
+  measured on deepseek-flash, and it made a turn silently skip compaction. The budget now covers both
+  (3000) and an empty answer is retried once. `count` is how many messages the
   *current* summary stands in for — one summary is in play; a later compaction recomputes the cut
   against the whole history.
 - **Compaction measures the request, not the transcript.** `maybeCompact` compares
-  `sentCost(hist, from, record)` — the summary message plus the messages after the cut — against the
-  threshold. Measuring `hist` instead looks equivalent and is not: the stored transcript never shrinks,
+  `sentCost(hist, from, record)` against the threshold. Measuring `hist` instead looks equivalent and is not: the stored transcript never shrinks,
   so a session that crossed the threshold once would re-summarize on **every** later turn, paying for a
   summary identical to the one it already has. That was the behaviour until it was measured; the 40%
   keep ratio only means anything if the tail is what is judged. `summaryMessage` builds the sent text
@@ -343,11 +344,10 @@ fixed delay — a load issued before the socket is up fails silently and reports
   `On`, `Remove`), wrong only where the two places must read differently — which is why the appearance
   page says "Interface scale" and "Font scale" rather than "Scale" twice. Word them differently; do
   not add context support to the loader.
-- **The settings search lives in the sidebar, not in the page.** The sidebar owns the text and
-  `SettingsContent.searchQuery` binds to it. The consequence of that ownership: a property bound from a
-  parent **cannot be assigned from the child**, so the result list asks for a page (`pageRequested`) and
-  for the field to be emptied (`searchDismissed`) rather than assigning `currentIndex` or `searchQuery`
-  — the direct way silently does nothing.
+- **Settings search lives in the sidebar.** The sidebar owns the text, `SettingsContent.searchQuery`
+  binds to it, and a property bound from a parent **cannot be assigned from the child** — so the result
+  list asks for a page (`pageRequested`) and for the field to be emptied (`searchDismissed`) instead of
+  assigning `currentIndex` or `searchQuery`, which silently does nothing.
 - **The settings search reads the widget tree, and only works because of `visible` semantics.** There is
   no index: `_collectRows` walks the live rows per keystroke, affordable because a page is a few dozen
   widgets. Two things are easy to undo by accident: pages are kept **visible** during a search and moved

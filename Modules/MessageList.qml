@@ -98,6 +98,11 @@ DListView {
     Connections {
         target: Chat
 
+        function onSeamRevealRequested() {
+            // scrollToTop turns follow off first; a pending stickToEnd would pull the view back down.
+            list.scrollToTop();
+        }
+
         function onJumpRequested(index) {
             if (index < 0 || index >= list.count)
                 return;
