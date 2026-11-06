@@ -80,7 +80,15 @@ FloatingWindow {
     title: Chat.busy ? "Code — " + I18n.tr("generating", "window title suffix while a reply streams") : "Code"
     onClosed: hideRequested()
 
-    Component.onCompleted: syncReveal()
+    Component.onCompleted: {
+        syncReveal();
+        // The dialogs below are part of the window, not of the daemon's state: the window can be opened
+        // while a permission request or a question is already waiting for an answer.
+        if (Backend.permissionRequests.length > 0)
+            permissionLoader.active = true;
+        if (Backend.questions.length > 0)
+            questionLoader.active = true;
+    }
 
     Behavior on sidebarReveal {
         enabled: Theme.animationsEnabled
@@ -176,9 +184,9 @@ FloatingWindow {
                         if (window.isCompactMode)
                             window.menuVisible = false;
                         if (view === "search")
-                            searchModal.show();
+                            window.openSearch();
                         else if (view === "tasks")
-                            taskModal.show();
+                            window.openTasks();
                     }
                     onCreateSessionRequested: window.newSession()
                     onSessionActivated: id => {
@@ -311,9 +319,9 @@ FloatingWindow {
                     onViewChanged: view => {
                         window.menuVisible = false;
                         if (view === "search")
-                            searchModal.show();
+                            window.openSearch();
                         else if (view === "tasks")
-                            taskModal.show();
+                            window.openTasks();
                     }
                     onCreateSessionRequested: window.newSession()
                     onSessionActivated: id => {
@@ -339,28 +347,89 @@ FloatingWindow {
         }
     }
 
-    SearchModal {
-        id: searchModal
-        parentWindow: window
+    // --- the four dialogs, built when first needed ---
+    //
+    // Search and tasks are opened from the sidebar, so they used to be built with the window even for
+    // someone who never opens them (308 + 515 lines of QML, all of it load time). Same Loader shape as
+    // settings above: the object appears on the first open.
+    //
+    // Permission and questions are not click-driven — the daemon decides when they appear — so they
+    // cannot wait for a click. Both open themselves in Component.onCompleted when a request is already
+    // waiting (Backend appends to the list before emitting, so the order holds), which means a
+    // Connections here is enough: the same event activates the loader, and the new object finds the
+    // request on its own.
+    Loader {
+        id: searchLoader
+        active: false
+        sourceComponent: Component {
+            SearchModal {
+                parentWindow: window
+            }
+        }
     }
 
-    TaskModal {
-        id: taskModal
-        parentWindow: window
+    Loader {
+        id: taskLoader
+        active: false
+        sourceComponent: Component {
+            TaskModal {
+                parentWindow: window
+            }
+        }
+    }
+
+    // A Loader is synchronous, so item exists on the next line — guarded anyway, because a component
+    // that failed to load leaves item null and a TypeError in a click handler hides the real error.
+    function openSearch() {
+        searchLoader.active = true;
+        if (searchLoader.item)
+            searchLoader.item.show();
+    }
+
+    function openTasks() {
+        taskLoader.active = true;
+        if (taskLoader.item)
+            taskLoader.item.show();
     }
 
     Toast {
         anchors.fill: parent
     }
 
-    // The daemon asks back here when a tool wants to touch files or run commands.
-    // Sits above the window like the toast, listening to Backend on its own.
-    PermissionDialog {}
+    Loader {
+        id: permissionLoader
+        active: false
+        sourceComponent: Component {
+            PermissionDialog {}
+        }
+    }
 
-    // Model questions (ask_user); also listens to Backend directly.
-    QuestionDialog { id: questionDialog }
+    Loader {
+        id: questionLoader
+        active: false
+        sourceComponent: Component {
+            QuestionDialog {}
+        }
+    }
 
-    // Exposed so the composer's "question waiting" chip can bring it back, and so the flow can be
-    // driven from outside the window.
-    readonly property alias questionDialog: questionDialog
+    Connections {
+        target: Backend
+
+        function onPermissionPending() {
+            permissionLoader.active = true;
+        }
+
+        function onQuestionPending() {
+            questionLoader.active = true;
+        }
+    }
+
+    Connections {
+        target: Chat
+
+        // The ask_user tool card, for a question that was put aside.
+        function onQuestionRestoreRequested() {
+            questionLoader.active = true;
+        }
+    }
 }

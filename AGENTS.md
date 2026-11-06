@@ -128,6 +128,12 @@ fixed delay — a load issued before the socket is up fails silently and reports
   xdg_toplevel, so a tiling compositor tiles it edge to edge instead of floating it over the window
   that opened it. There is no default — Quickshell cannot infer the owner — and `FileBrowserModal`
   spells the same property `parentModal`. `check-windows.py` fails when an instance forgets it.
+- **A dialog behind a `Loader` is not listening until it is active.** Search and tasks are built on
+  first open, and so are the permission and question dialogs — those two are not click-driven, so
+  `ChatWindow`'s own `Connections` activates their loaders from `Backend`, plus once on window creation
+  for a request that arrived while the window was closed. Both then open themselves in
+  `Component.onCompleted`, which only works because `Backend` appends to the request list *before* it
+  emits. A third daemon-driven dialog needs the same three cases or it silently never appears.
 - **Never name an `IpcHandler` function `show`.** `qs ipc` has subcommands `show|call|wait|listen|prop`;
   a trailing `show` is eaten by the CLI, which prints the target list and exits 0. The window raiser
   is called `raise` for exactly this reason.
