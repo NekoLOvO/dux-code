@@ -147,6 +147,30 @@ Approval granularity:
 It uses its own session (`dcode`), does not touch the LobeHub one, and does not keep logins across
 conversations.
 
+### Attachments and images
+
+`chat.send` carries `attachments`: absolute paths, recorded on the user message and nothing more. The
+daemon decides what they mean at send time, and today it does exactly one thing with them — images.
+
+An attachment is sent as an image when its extension looks like one **and** its header agrees
+(`sniffImage`; png, jpeg, gif, webp). Extensions lie, headers do not, and a wrong guess is a 400 that
+names neither the file nor the reason. A file that fails either test is skipped with a warning in the
+log instead of failing the turn: losing one image beats losing the question.
+
+Images ride on **every step** of the turn that attached them, not only the first: a tool loop re-sends
+the request, and a model that lost the picture mid-loop would answer about a file it can no longer see.
+Only the **last** user message's images are sent, so the next turn does not pay for them again — the
+model forgetting the picture one turn later is the deliberate half of that trade. Caps: 4 images, 8 MB
+each; base64 adds a third on top, and a 4K screenshot is thousands of tokens per step.
+
+A 4xx with images attached is usually "this model cannot see images". That is said in the error and
+**not** retried without them: silently dropping the picture leaves the model answering a question about
+an image the user believes it saw.
+
+The composer owns the pending list (absolute paths, thumbnails for images) and `PasteProbe` turns a
+pasted file into an attachment rather than its path — a file manager puts both `text/uri-list` and
+`text/plain` on the clipboard, and Quickshell only exposes the latter.
+
 ## Config
 
 `~/.config/dcode/config.json` (0600), in the same directory as the UI's `ui-settings.json` but separate:
@@ -315,9 +339,6 @@ another window.)
 
 ## Not done yet
 
-- **Attachments / images**: `llm.Message.Content` is a `string`, so an image cannot get in. Supporting it
-  means turning content into parts (text + image), translating that per provider, and adding paste
-  handling to the composer.
 - **A built-in system prompt**: `config.systemPrompt` exists, but leaving it empty means only the
   auto-added working directory and skill list — there is no default persona.
 - **Unattended tasks**: scheduling rides on the daemon's ticker, so nothing runs while the app is closed.
