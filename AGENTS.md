@@ -167,6 +167,15 @@ fixed delay — a load issued before the socket is up fails silently and reports
   is how every hard break in the stress file became a space. Same for `/\\$/`. And a blank-line
   branch that jumps the index must sit in a `while`, not a `for` — a `continue` re-applies the `i++`
   and skips the line it just moved to (that is how a footnote's second paragraph went missing).
+- **A background inside `<pre>` does not stay on its line, so a painted line gets its own block.**
+  Qt paints a span's background across the line break: a diff card's red run coloured the *tail of
+  the next line*, and the green line below it looked half red. Closing the span before the newline
+  does not help — the newline itself carries the paint — so `highlight.renderLines` puts every line
+  that has a background in its own `<pre>` with the paint hoisted onto that block, and leaves the
+  rest in one shared `<pre>`. The invariant, which the test asserts: **no `<span>` carries a
+  background.** The same colour on the block becomes its text colour, or a nested span with no
+  colour of its own would be unreadable. Also `chroma.Colour.String()` on an unset colour prints
+  `#-00001`, so check `IsSet()` before writing one into a style.
 - **Inline placeholders nest, so restoring them takes a loop.** A code span inside a link label is a
   token inside a token; one pass leaves a literal `\u0000N\u0000` in the document. Each value only
   refers to tokens created before it, so repeating terminates. A link label also needs the emphasis

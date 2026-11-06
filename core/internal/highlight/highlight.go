@@ -9,7 +9,6 @@ package highlight
 
 import (
 	"bytes"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -81,24 +80,23 @@ func HTML(lang, code string, light bool) (string, error) {
 		style = styles.Fallback
 	}
 
-	// Wrap <pre> here: chroma would add background-color and a pile of tab-size values, which Qt
-	// either ignores or which would override the card's background. The card owns the
-	// background; this carries text colour only and zeroes Qt's default pre margins.
-	color := style.Get(chroma.Text).Colour.String()
+	// The body is formatted on its own and wrapped afterwards: a line that carries a background has
+	// to be its own block element (see renderLines), so the <pre> cannot be written before the
+	// lines are known.
 	var buf bytes.Buffer
-	if color != "" {
-		buf.WriteString(`<pre style="color:` + color + `;margin:0;">`)
-	} else {
-		buf.WriteString(`<pre style="margin:0;">`)
-	}
-
 	formatter := html.New(html.WithClasses(false), html.TabWidth(4), html.PreventSurroundingPre(true))
 	if err := formatter.Format(&buf, style, iterator); err != nil {
 		return "", err
 	}
-	buf.WriteString("</pre>")
 
-	out := splitSpansAtLines(buf.String())
+	// A style without a text colour leaves Colour unset, and String() then prints "#-00001" — an
+	// invalid colour for an invalid reason. Unset means "inherit the card's", so say nothing.
+	text := ""
+	if c := style.Get(chroma.Text).Colour; c.IsSet() {
+		text = c.String()
+	}
+
+	out := renderLines(buf.String(), text)
 	mu.Lock()
 	if len(order) >= cacheLimit {
 		// Oldest out first. A real LRU is overkill: revisiting a block within one session is far
@@ -113,86 +111,216 @@ func HTML(lang, code string, light bool) (string, error) {
 	return out, nil
 }
 
-// splitSpansAtLines closes every open <span> at a newline and reopens it on the next line, but only
-// where a span carries a background colour.
+// renderLines turns chroma's body into one <pre> per group of lines, giving any line that carries a
+// background colour a block element of its own.
 //
-// Qt's rich text paints a span background lazily across the line break: a diff card's red or green
-// run bleeds into the tail of the following line, which reads as the wrong line being marked. A
-// foreground colour crossing a newline is harmless, so text-colour spans are left alone — otherwise a
-// long block would grow a tag pair per line for nothing.
-func splitSpansAtLines(html string) string {
-	var b strings.Builder
-	b.Grow(len(html) + len(html)/8)
+// Qt's rich text cannot be trusted with a background inside <pre>: a span that ends where a line ends
+// leaves its background painted over the *rest of the following line* (measured — a diff's red run
+// coloured the tail of the green line below it). Closing the span before the newline does not help;
+// the newline itself carries the paint. What does work is a block element per painted line, whose
+// background fills the width of the block. So: a painted line becomes its own <pre> with the paint
+// hoisted onto it, and every other line stays in one shared <pre>.
+//
+// The background is hoisted, not duplicated: a background left on the span inside would bring the
+// bug back.
+func renderLines(body, text string) string {
+	lines := splitRuns(body)
 
-	// open is the stack of span tags currently in effect; styled records which of them carry a
-	// background, so the decision is "does any open span have one" rather than "is a span open".
-	type span struct {
-		tag   string
-		paint bool
+	base := "margin:0;"
+	if text != "" {
+		base += "color:" + text + ";"
 	}
-	var open []span
 
-	for i := 0; i < len(html); {
-		if html[i] == '\n' {
-			painted := false
-			for _, s := range open {
-				if s.paint {
-					painted = true
-					break
-				}
+	var b strings.Builder
+	var group []string
+	flush := func() {
+		if len(group) == 0 {
+			return
+		}
+		b.WriteString(`<pre style="` + base + `">`)
+		b.WriteString(strings.Join(group, "\n"))
+		b.WriteString("</pre>")
+		group = group[:0]
+	}
+
+	// chroma's body ends with a newline, which splitRuns turns into a final empty line. A blank row
+	// at the bottom of a card is height nobody asked for, and the last line keeps its own newline.
+	for len(lines) > 0 && lines[len(lines)-1].html == "" && lines[len(lines)-1].paint == "" {
+		lines = lines[:len(lines)-1]
+	}
+
+	for _, line := range lines {
+		if line.paint == "" {
+			group = append(group, line.html)
+			continue
+		}
+		flush()
+		// The paint is the block's background, and its colour becomes the block's text colour so a
+		// painted line stays legible even where a nested span carried no colour of its own.
+		style := "margin:0;background-color:" + line.paint + ";"
+		if line.color != "" {
+			style += "color:" + line.color + ";"
+		} else if text != "" {
+			style += "color:" + text + ";"
+		}
+		b.WriteString(`<pre style="` + style + `">` + line.html + "</pre>")
+	}
+	flush()
+
+	return b.String()
+}
+
+// one line of formatted code: its HTML with the background span removed, plus the paint that was
+// taken off it.
+type codeLine struct {
+	html  string
+	paint string
+	color string
+}
+
+// splitRuns cuts the body into lines, tracking which spans are open so each line can be rendered on
+// its own. A span carrying a background is reported once and dropped from the line's HTML.
+func splitRuns(body string) []codeLine {
+	var (
+		out   []codeLine
+		cur   strings.Builder
+		stack []spanStyle
+		paint string
+		color string
+	)
+
+	reset := func() {
+		paint, color = "", ""
+	}
+
+	closeAll := func() {
+		for i := len(stack) - 1; i >= 0; i-- {
+			// A hoisted span was never opened on this line, so closing it would unbalance the HTML.
+			if stack[i].painted {
+				continue
 			}
-			if painted {
-				// Close in reverse, then reopen in order: HTML nesting has to stay well formed.
-				for j := len(open) - 1; j >= 0; j-- {
-					b.WriteString("</span>")
-				}
+			cur.WriteString("</span>")
+		}
+	}
+	openAll := func() {
+		for _, s := range stack {
+			if s.painted {
+				continue // hoisted to the block; leaving it here is what paints the wrong line
 			}
-			b.WriteByte('\n')
-			if painted {
-				for _, s := range open {
-					b.WriteString(s.tag)
+			cur.WriteString(`<span style="` + s.style + `">`)
+		}
+	}
+
+	for i := 0; i < len(body); {
+		switch {
+		case body[i] == '\n':
+			closeAll()
+			out = append(out, codeLine{html: cur.String(), paint: paint, color: color})
+			cur.Reset()
+			reset()
+			openAll()
+			i++
+
+		case body[i] == '<':
+			end := strings.IndexByte(body[i:], '>')
+			if end < 0 {
+				cur.WriteString(body[i:])
+				i = len(body)
+				continue
+			}
+			tag := body[i : i+end+1]
+			switch {
+			case strings.HasPrefix(tag, "<span") && !strings.HasSuffix(tag, "/>"):
+				style := spanStyleOf(tag)
+				painted := strings.Contains(style, "background-color")
+				if painted && paint == "" {
+					paint = styleValue(style, "background-color")
+					color = styleValue(style, "color")
+				}
+				stack = append(stack, spanStyle{style: style, painted: painted})
+				if !painted {
+					cur.WriteString(tag)
+				}
+			case tag == "</span>" && len(stack) > 0:
+				last := stack[len(stack)-1]
+				stack = stack[:len(stack)-1]
+				if !last.painted {
+					cur.WriteString(tag)
+				}
+			default:
+				cur.WriteString(tag)
+			}
+			i += end + 1
+
+		default:
+			cur.WriteByte(body[i])
+			i++
+		}
+	}
+
+	closeAll()
+	out = append(out, codeLine{html: cur.String(), paint: paint, color: color})
+	for i := range out {
+		out[i].html = dropEmptySpans(out[i].html)
+	}
+	return out
+}
+
+// dropEmptySpans removes <span …></span> pairs left by a token that held nothing — a diff hunk marker
+// with no text of its own, for instance. Harmless to read, but they cost a tag pair each and Qt parses
+// every one of them.
+func dropEmptySpans(html string) string {
+	for {
+		trimmed := html
+		for i := 0; i < len(trimmed); {
+			if strings.HasPrefix(trimmed[i:], "<span") {
+				gt := strings.IndexByte(trimmed[i:], '>')
+				if gt > 0 {
+					at := i + gt + 1
+					if strings.HasPrefix(trimmed[at:], "</span>") {
+						trimmed = trimmed[:i] + trimmed[at+len("</span>"):]
+						continue
+					}
 				}
 			}
 			i++
-			continue
 		}
-
-		if html[i] == '<' {
-			end := strings.IndexByte(html[i:], '>')
-			if end < 0 {
-				b.WriteString(html[i:])
-				break
-			}
-			tag := html[i : i+end+1]
-			switch {
-			case strings.HasPrefix(tag, "<span") && !strings.HasSuffix(tag, "/>"):
-				open = append(open, span{tag: tag, paint: strings.Contains(tag, "background-color")})
-			case tag == "</span>" && len(open) > 0:
-				open = open[:len(open)-1]
-			}
-			b.WriteString(tag)
-			i += end + 1
-			continue
+		if trimmed == html {
+			return html
 		}
-
-		b.WriteByte(html[i])
-		i++
-	}
-	// A span that held nothing but the newline leaves an empty pair behind; with a background it
-	// would paint a sliver at the start of the next line.
-	out := b.String()
-	for {
-		trimmed := emptySpan.ReplaceAllString(out, "")
-		if trimmed == out {
-			return out
-		}
-		out = trimmed
+		html = trimmed
 	}
 }
 
-// An empty span pair. The tag bodies can be empty, so this has to be a regexp rather than a
-// strings.Replace.
-var emptySpan = regexp.MustCompile(`<span[^>]*></span>`)
+type spanStyle struct {
+	style   string
+	painted bool
+}
+
+// spanStyleOf is the attribute string of an opening <span style="…">.
+func spanStyleOf(tag string) string {
+	const marker = `style="`
+	i := strings.Index(tag, marker)
+	if i < 0 {
+		return ""
+	}
+	rest := tag[i+len(marker):]
+	if j := strings.IndexByte(rest, '"'); j >= 0 {
+		return rest[:j]
+	}
+	return rest
+}
+
+// styleValue reads one declaration out of a style attribute.
+func styleValue(style, name string) string {
+	for _, part := range strings.Split(style, ";") {
+		key, value, ok := strings.Cut(strings.TrimSpace(part), ":")
+		if ok && strings.EqualFold(strings.TrimSpace(key), name) {
+			return strings.TrimSpace(value)
+		}
+	}
+	return ""
+}
 
 func cacheKey(lang, code string, light bool) string {
 	var b strings.Builder
