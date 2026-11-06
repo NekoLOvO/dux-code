@@ -25,13 +25,21 @@ TextEdit {
     // the .js, which has no access to QML singletons.
     readonly property var proseStyle: ({
         "base": muted ? Theme.fontSizeSmall : Math.round(Theme.fontSizeMedium * 1.02),
-        "h1": muted ? Theme.fontSizeMedium + 1 : Theme.fontSizeXLarge,
-        "h2": muted ? Theme.fontSizeMedium : Theme.fontSizeLarge,
-        "h3": muted ? Theme.fontSizeMedium : Theme.fontSizeMedium + 1,
+        // H1..H6, in order. The top three are the design's 20 / 16 / 15; below that the scale has
+        // only 14 left, so the last two are told apart by colour (see TextBlock's colour rule)
+        // rather than by a size difference nobody can see.
+        "sizes": muted
+            ? [Theme.fontSizeMedium + 1, Theme.fontSizeMedium, Theme.fontSizeMedium, Theme.fontSizeSmall,
+               Theme.fontSizeSmall, Theme.fontSizeSmall]
+            : [Theme.fontSizeXLarge, Math.round(Theme.fontSizeLarge * 1.06), Theme.fontSizeLarge,
+               Theme.fontSizeMedium + 1, Theme.fontSizeMedium, Theme.fontSizeMedium],
+        // Code nested in a quote or a list item renders as monospace text here, not as a card.
+        "small": Theme.fontSizeSmall,
         "font": Theme.fontFamily,
         "mono": Theme.monoFontFamily,
         "text": muted ? Theme.surfaceVariantText : Theme.surfaceText,
         "quote": Theme.surfaceVariantText,
+        "accent": Theme.primary,
         "codeBg": Theme.surfaceContainerHigh,
         "codeFg": Theme.surfaceText,
         // Column spacing between blocks is spacingM; inside one TextEdit that gap has to be a margin.
@@ -39,6 +47,14 @@ TextEdit {
         // A heading used to add spacingS of top padding on top of the column gap.
         "headGap": Theme.spacingS,
         "quoteIndent": Theme.spacingM,
+        "quotePad": Theme.spacingS,
+        // A quote is a tinted block rather than a bar down its left side: Qt's rich text paints no
+        // border on a block element, and a table cell's background covers only its first line.
+        // Nested quotes step one container-tone darker so the depth is visible.
+        "quoteBg": Theme.surfaceContainerHigh,
+        "quoteBgDeep": Theme.surfaceContainerHighest,
+        "markBg": Theme.tertiaryContainer,
+        "listIndent": Theme.spacingL,
         // Table chrome. The grid is the same hairline a code card's border uses, and cellpadding is
         // the only padding Qt's table layout offers (a cell's background is inset by it, so the header
         // row is drawn by weight instead).

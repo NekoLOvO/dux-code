@@ -151,6 +151,26 @@ fixed delay — a load issued before the socket is up fails silently and reports
   draws a table grid only from the *table's* `border` plus `border-collapse` — a border on a cell
   paints nothing, there is no per-side border, and a cell background is inset by `cellpadding`.
   Hence the bold header instead of a shaded one.
+- **Markdown is one document, so structure has to be HTML — and only what Qt draws counts.**
+  `Blockizer.js` parses paragraphs, h1–h6, nested lists (`start`, task boxes), nested quotes,
+  tables, fenced code, and reference / footnote definitions, then emits one HTML string per prose
+  run. Measured, not guessed: `<br/>`, `<ol start>`, nested `<ul>`, `<sub>`, `<sup>`, `<u>`, `<s>`
+  and a block-level `background-color` work; a `border` on a block element paints **nothing** (so a
+  quote is a tint, not a bar) and a table cell's background covers only its **first line** (so a
+  cell cannot be a bar either). Check such a claim by rendering offscreen and reading pixels. A
+  fence **inside** a quote or list item is a monospace `<pre>` in place, not a `CodeBlock` card — a
+  card is a widget and the run is one TextEdit; the lost highlight is what keeps the quote in one
+  piece. Task boxes are the ☑/☐ glyphs, footnote markers are not links (the definitions are
+  collected at the end), and an image becomes `[image: alt]` because rich text cannot fetch one.
+- **Trailing whitespace is a hard break, so a paragraph line loses its indent and nothing else.**
+  `lines[i].replace(/^[ \t]+/, "")`, never `trim()`: two trailing spaces mean `<br/>`, and trimming
+  is how every hard break in the stress file became a space. Same for `/\\$/`. And a blank-line
+  branch that jumps the index must sit in a `while`, not a `for` — a `continue` re-applies the `i++`
+  and skips the line it just moved to (that is how a footnote's second paragraph went missing).
+- **Inline placeholders nest, so restoring them takes a loop.** A code span inside a link label is a
+  token inside a token; one pass leaves a literal `\u0000N\u0000` in the document. Each value only
+  refers to tokens created before it, so repeating terminates. A link label also needs the emphasis
+  pass applied before it is held, or `[**bold**](url)` draws its asterisks.
 - **A model question can be put aside, and only another question brings it back.** The dialog is modal
   and the daemon is blocked inside the tool call until it gets an answer, so "hide" cannot mean
   "dismiss" — that is what Skip does, and it changes the conversation. `QuestionDialog.minimize()`
