@@ -470,11 +470,6 @@
     "context": "message action: copy the tool card"
   },
   {
-    "term": "Copy this block",
-    "translation": "",
-    "context": "message action: copy one paragraph"
-  },
-  {
     "term": "Could not create the branch",
     "translation": "",
     "context": "branch creation failed"

@@ -477,29 +477,13 @@ Item {
                         blk: blockWrap.blk
                     }
 
-                    // Copy without aiming at all: a prose run is now one TextEdit and can be
-                    // selected freely, so this is a shortcut for the section under the cursor
-                    // rather than the only way to take more than one line.
-                    CopyButton {
-                        visible: blockHover.hovered && blockWrap.blk && blockWrap.blk.type !== "code"
-                        anchors.right: parent.right
-                        anchors.bottom: parent.bottom
-                        anchors.bottomMargin: -Theme.spacingXS
-                        // Sits on top of the text, so it needs a background to stay visible.
-                        variant: "tonal"
-                        // A prose run has no single .text: lists and quotes carry their content in
-                        // parts, so the Markdown they came from is rebuilt instead.
-                        copyText: blockWrap.blk
-                            ? (blockWrap.blk.type === "code"
-                                ? (blockWrap.blk.code || "")
-                                : Blockizer.proseCopy(blockWrap.blk))
-                            : ""
-                        Accessible.name: I18n.tr("Copy this block", "message action: copy one paragraph")
-                    }
-
-                    HoverHandler {
-                        id: blockHover
-                    }
+                    // No per-block copy button here.
+                    //
+                    // It existed because a selection could not leave one block, so copying an answer
+                    // meant copying it a paragraph at a time. Prose is one TextEdit per run now and
+                    // selects freely, which leaves only the two things Qt still scopes to their own
+                    // editor: a code card (which has its own button, in its header) and a rule, which
+                    // is a line and has nothing to copy.
                 }
             }
 
