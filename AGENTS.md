@@ -167,24 +167,22 @@ fixed delay — a load issued before the socket is up fails silently and reports
   tokens created before it, so repeating terminates. A link label also needs the emphasis pass before
   it is held, or `[**bold**](url)` draws its asterisks.
 - **A background inside `<pre>` does not stay on its line, so a painted line gets its own block.**
-  Qt paints a span's background across the line break: a diff card's red run coloured the *tail of
-  the next line*, and the green line below it looked half red. Closing the span before the newline
-  does not help — the newline itself carries the paint — so `highlight.renderLines` puts every line
-  that has a background in its own `<pre>` with the paint hoisted onto that block, and leaves the
-  rest in one shared `<pre>`. The invariant, which the test asserts: **no `<span>` carries a
-  background.** The same colour on the block becomes its text colour, or a nested span with no
-  colour of its own would be unreadable. Also `chroma.Colour.String()` on an unset colour prints
-  `#-00001`, so check `IsSet()` before writing one into a style.
+  Qt paints a span's background across the line break: a diff card's red run coloured the *tail of the
+  next line*. Closing the span before the newline does not help — the newline carries the paint — so
+  `highlight.renderLines` gives every line with a background its own `<pre>`. Invariant, asserted by a
+  test: **no `<span>` carries a background**; the colour moves to the block (as its text colour), or a
+  nested span without one would be unreadable. And `chroma.Colour.String()` prints `#-00001` for an
+  unset colour, so check `IsSet()` first.
 - **Inline placeholders nest, so restoring them takes a loop.** A code span inside a link label is a
   token inside a token; one pass leaves a literal `\u0000N\u0000` in the document. Each value only
   refers to tokens created before it, so repeating terminates. A link label also needs the emphasis
   pass applied before it is held, or `[**bold**](url)` draws its asterisks.
-- **A Theme token that does not exist fails at run time, silently.** `check-upstream.sh` compares the
-  Theme *contract*; it never asked whether a name in our own QML exists, so an invented
-  `Theme.secondaryContainerText` passed every gate and arrived as `Unable to assign [undefined] to
-  QColor`. `tools/check-theme-tokens.py` (in `make check`) resolves every `Theme.x`; it found two.
-- **A row read from a ListModel copies nothing when appended to another.** `archived.append(messages.get(i))`
-  gave rows with no `rawText`: `get()` returns an element, not a value. Copy roles (`Chat._rowCopy`).
+- **A Theme token that does not exist fails at run time, silently.** An invented
+  `Theme.secondaryContainerText` passed every gate (`check-upstream.sh` compares the *contract*, never
+  our own names) and arrived as `Unable to assign [undefined] to QColor`.
+  `tools/check-theme-tokens.py` resolves every `Theme.x` (it found two).
+- **A row appended from one ListModel to another copies nothing.** `archived.append(messages.get(i))`
+  gave rows with no `rawText`: `get()` returns an element. Copy roles (`Chat._rowCopy`).
 - **A model question can be put aside, and only another question brings it back.** The dialog is modal
   and the daemon is blocked inside the tool call until it gets an answer, so "hide" cannot mean
   "dismiss" — that is Skip, and it changes the conversation. `QuestionDialog.minimize()` closes the
@@ -296,11 +294,12 @@ fixed delay — a load issued before the socket is up fails silently and reports
   not move. `_locateCompaction` falls back to row 0 only when the id is not found *and* the prefix is
   folded; checked first it pinned every later compaction to row 0. `_foldAboveSeam` folds a compaction
   that fires mid-session (one `messages.remove(0, k)`) and moves `liveIndex`/`pendingUserRow` with it. A
-  search hit inside the fold sets `Chat.archiveJump`. The archive must render **tool rows**: on a real
-  session 302 of 371 archived rows were calls, and drawing only their count left bare labels. **A live fold is invisible without help**: the
+  search hit inside the fold sets `Chat.archiveJump`. The archive must render **tool rows**: 302 of 371
+  archived rows in a real session were calls, so a count-only delegate left bare labels. **A live fold is invisible without help**: the
   seam becomes row 0, ~70k px above a view that follows the reply, so the toast ("Folded N earlier
-  messages", action → `Chat.seamRevealRequested`) is the only thing that says it happened — and reveal
-  it with `scrollToTop`, not `jumpRequested(0)`, which ListView centres to a negative contentY.
+  messages", action → `Chat.seamRevealRequested`) is the only thing that says so — and reveal it with
+  `scrollToTop`, not `jumpRequested(0)`, which ListView centres below zero. A fold is not a reload, so
+  the list keeps a stale `contentY`: hence `Chat.seamFoldStarting`/`seamFolded`.
 - **"The summary is empty" is a reasoning model out of budget, not a broken request.** `summarize` sent
   `MaxTokens: 900`, which a reasoning model can spend entirely on thinking and then emit no content —
   measured on deepseek-flash, and it made a turn silently skip compaction. The budget now covers both

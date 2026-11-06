@@ -135,6 +135,14 @@ QtObject {
     // content (a negative contentY and an empty band).
     signal seamRevealRequested()
 
+    // Around `messages.remove(0, k)` in _foldAboveSeam.
+    //
+    // A fold is an in-place model edit, not a reload, so nothing else tells the list the transcript
+    // just got shorter: ListView keeps its contentY, and the rows it held are gone. Before lets the
+    // view remember where it was; after lets it put itself back.
+    signal seamFoldStarting()
+    signal seamFolded()
+
     function jumpTo(sessionId, messageId) {
         jumpTarget = messageId || "";
         if (sessionId !== "" && sessionId !== Sessions.activeId) {
@@ -316,8 +324,10 @@ QtObject {
             liveIndex -= k
         if (pendingUserRow >= 0)
             pendingUserRow -= k
+        seamFoldStarting()
         messages.remove(0, k)
         compactionRow = 0
+        seamFolded()
         // Say so. The seam is the first row now, which puts the card at the very top of the
         // transcript — thousands of pixels above a view that is following the reply, so a compaction
         // that fired during a turn changed nothing on screen. Nothing else in the window indicates it.

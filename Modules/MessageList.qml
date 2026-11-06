@@ -65,6 +65,46 @@ DListView {
             positionViewAtEnd();
     }
 
+    // --- a compaction folded the prefix away under us ---
+    //
+    // The fold is one `messages.remove(0, k)` (see Chat._foldAboveSeam) — not a reload. The model
+    // shrinks under the list, which keeps its contentY: that number was measured against a transcript
+    // thousands of pixels longer, and the scrollbar is drawn from contentY/contentHeight, so both end
+    // up describing a document that no longer exists.
+    //
+    // Before/after rather than one signal, because the number that matters is how much the content
+    // shrank, and only the view can measure that.
+    property real _preFoldHeight: -1
+    property real _preFoldY: 0
+
+    function foldStarting() {
+        _preFoldHeight = contentHeight;
+        _preFoldY = contentY;
+    }
+
+    function folded() {
+        // Two passes. The first runs before the new delegates are measured, so contentHeight is
+        // still the old estimate; the second sees the real one.
+        Qt.callLater(list.settleAfterFold);
+        Qt.callLater(function () {
+            Qt.callLater(list.settleAfterFold);
+        });
+    }
+
+    function settleAfterFold() {
+        if (_preFoldHeight < 0)
+            return;
+        if (follow) {
+            positionViewAtEnd();
+            return;
+        }
+        // Not following: the rows above the viewport went away, so everything below slid up by
+        // exactly what the content lost. Reading position preserved, clamped to what is left.
+        const lost = _preFoldHeight - contentHeight;
+        if (lost > 0)
+            contentY = Math.max(originY, Math.min(_preFoldY - lost, contentHeight - height));
+    }
+
     // Back to top: turn follow off explicitly before jumping. positionViewAtBeginning() alone
     // is not enough — a pending stickToEnd or a height change can pull it back, so it is
     // repeated after the jump.
@@ -97,6 +137,14 @@ DListView {
 
     Connections {
         target: Chat
+
+        function onSeamFoldStarting() {
+            list.foldStarting();
+        }
+
+        function onSeamFolded() {
+            list.folded();
+        }
 
         function onSeamRevealRequested() {
             // scrollToTop turns follow off first; a pending stickToEnd would pull the view back down.

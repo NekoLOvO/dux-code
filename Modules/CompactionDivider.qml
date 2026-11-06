@@ -69,7 +69,7 @@ Item {
         for (let i = 0; i < root.archive.count; i++) {
             const ids = String(root.archive.get(i).msgIds || "")
             if (ids !== "" && ("," + ids + ",").indexOf("," + root.revealId + ",") >= 0) {
-                archiveList.positionViewAtIndex(i, ListView.Center)
+                archiveList.revealIndex(i)
                 break
             }
         }
@@ -155,24 +155,23 @@ Item {
         }
 
         // ---- the card: summary, or what the summary replaced ----
-        Rectangle {
+        // The library's DCard, so the surface, radius and layer outline are the transcript's rather
+        // than a second opinion. Hand-drawn, this card was the only one in the window with a visible
+        // 1 px border: DCard takes its outline from Style.layerOutlineWidth, which is 0 here because
+        // SettingsData.blurLayerOutlineOpacity is.
+        DCard {
             id: card
 
             width: parent.width
             visible: root.open
-            height: visible ? content.implicitHeight + Theme.spacingM * 2 : 0
-            radius: Theme.cornerRadiusM
-            color: Theme.surfaceContainer
-            border.width: Theme.outlineWidth
-            border.color: Theme.outlineVariant
-            clip: true
+            height: visible ? content.implicitHeight + pad * 2 : 0
+            pad: Theme.spacingM
+            clipContent: true
 
             Column {
                 id: content
 
-                x: Theme.spacingM
-                y: Theme.spacingM
-                width: parent.width - Theme.spacingM * 2
+                width: parent.width
                 spacing: Theme.spacingS
 
                 // ---- tabs ----
@@ -239,7 +238,7 @@ Item {
                 // Its own list with its own height: the archive is hundreds of rows, and putting them
                 // in one column would build every delegate at once — the freeze, on demand. Bounded so
                 // one card cannot fill the window.
-                ListView {
+                DListView {
                     id: archiveList
 
                     width: parent.width
@@ -249,6 +248,8 @@ Item {
                     spacing: Theme.spacingM
                     boundsBehavior: Flickable.StopAtBounds
                     model: root.archive
+                    // Hundreds of rows in a box a few hundred pixels tall, so the scrollbar and the
+                    // edge fade matter: a bare ListView here gave no sign the list continued below.
 
                     delegate: Item {
                         id: archRow
