@@ -198,7 +198,7 @@ Item {
                                 anchors.centerIn: parent
                                 text: modelData.label
                                 font.pixelSize: Theme.fontSizeSmall
-                                color: root.tab === modelData.key ? Theme.secondaryContainerText : Theme.surfaceVariantText
+                                color: root.tab === modelData.key ? Theme.onSecondaryContainer : Theme.surfaceVariantText
                             }
 
                             MouseArea {
@@ -273,7 +273,7 @@ Item {
                                     : (entry.isUser
                                         ? I18n.tr("You", "compaction archive: this archived message is from the user")
                                         : I18n.tr("Assistant", "compaction archive: this archived message is from the model"))
-                                font.pixelSize: Theme.fontSizeXS
+                                font.pixelSize: Theme.fontSizeSmall
                                 color: Theme.surfaceVariantText
                             }
 

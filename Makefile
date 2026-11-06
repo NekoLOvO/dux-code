@@ -40,6 +40,7 @@ hot: run
 
 check:
 	@./tools/check-upstream.sh
+	@./tools/check-theme-tokens.py
 	@./tools/check-windows.py
 	@./tools/check-english.py
 

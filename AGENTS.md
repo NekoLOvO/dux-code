@@ -179,6 +179,14 @@ fixed delay — a load issued before the socket is up fails silently and reports
   token inside a token; one pass leaves a literal `\u0000N\u0000` in the document. Each value only
   refers to tokens created before it, so repeating terminates. A link label also needs the emphasis
   pass applied before it is held, or `[**bold**](url)` draws its asterisks.
+- **A Theme token that does not exist fails at run time, silently.** `check-upstream.sh` compares the
+  Theme *contract*; it never asked whether a name in our own QML exists, so an invented
+  `Theme.secondaryContainerText` passed every gate and arrived as `Unable to assign [undefined] to
+  QColor`. `tools/check-theme-tokens.py` (in `make check`) resolves every `Theme.x` against
+  `Common/Theme.qml`; it found two on its first run.
+- **A row read from a ListModel copies nothing when appended to another.** `archived.append(messages.get(i))`
+  gave rows with no `rawText` — `get()` returns a model element, not a value. Copy the roles into a
+  plain object (`Chat._rowCopy`) wherever a row moves between models.
 - **A model question can be put aside, and only another question brings it back.** The dialog is modal
   and the daemon is blocked inside the tool call until it gets an answer, so "hide" cannot mean
   "dismiss" — that is Skip, and it changes the conversation. `QuestionDialog.minimize()` closes the
@@ -239,20 +247,17 @@ fixed delay — a load issued before the socket is up fails silently and reports
   also compares `_loadToken` or the transcript is installed twice.
 - **Loading a session is per-row insertion, and it has to be spread out.** Measured on 940 rows: the
   daemon read them in 141ms, building them took 17ms, and making them the list's model took **8.5
-  seconds** blocked end to end — long enough for Hyprland to overlay "application not responding". So
-  `Chat._loadChunk` rows are inserted per turn of the event loop with `Qt.callLater`. The cost per row
-  does not change; the window answers pings in between. Two things ride on the same flag:
-  `Modules/MessageList.qml` must not `stickToEnd` while `Chat.loading` (a layout pass and a fresh
-  delegate per row), and it scrolls twice on `rowsLoaded` because the first jump reveals rows never
-  measured. Anything writing to `messages` mid-load must call `Chat._finishRows()` first (see
-  `Chat.send`). Still open for the *unfolded* part: the total is seconds on a very long session, so the
-  rest of the answer is paging — scroll anchor, search jumps into unloaded rows, edit/regenerate by
-  message id. Folding the compacted prefix (above) is the first slice of it.
-- **A model reset is not the accelerator it looks like.** Inserting 1,121 rows into a detached model then
-  assigning it measured 119ms; appending them with no view attached, 10ms; both gave the same
-  `contentHeight` once the view was pointed at them. The cost is the view's layout-and-create-a-delegate
-  per inserted row, which is why chunked insertion plus a suppressed follow is the fix. An earlier note
-  claimed a reset was 40x faster; that compared two different row sets.
+  seconds** blocked end to end — long enough for Hyprland to overlay "application not responding".
+  `Chat._loadChunk` rows go in per turn of the event loop with `Qt.callLater`: the cost per row does not
+  change, the window answers pings in between. `MessageList` must not `stickToEnd` while
+  `Chat.loading` (a layout pass and a fresh delegate per row) and scrolls twice on `rowsLoaded`, because
+  the first jump reveals rows never measured. Anything writing to `messages` mid-load calls
+  `Chat._finishRows()` first. Still open for the *unfolded* part: paging.
+- **A model reset is not the accelerator it looks like.** 1,121 rows into a detached model then
+  assigned: 119ms; appended with no view attached: 10ms; identical `contentHeight` once pointed at
+  them. The cost is the view's layout-and-create-a-delegate per row, which is why chunked insertion
+  plus a suppressed follow is the fix. An earlier note claimed 40x and a different height; that
+  compared two different row sets.
 - **`0` is a real value** for `maxOutputTokens`, `maxToolSteps` and `compactAt` — it means "off".
   Do not reintroduce `<= 0 → default`; the migration pins v2 zeros instead. The output cap's default
   is 0: a cap set too low truncates replies where the user cannot see why.
@@ -289,19 +294,18 @@ fixed delay — a load issued before the socket is up fails silently and reports
   can read never fires in time, and the overflow that follows is a 400 that is not retried. The daemon
   publishes the lowered value as `effectiveCompactAt` so the settings row can say what will really
   happen instead of repeating the rule in QML.
-- **The compacted prefix is folded, not rendered.** It is what the model no longer reads and most of
-  the rows on a long session: measured on a 460-message session, folding took the model from 460
-  rows to 60. `Chat.loadSession` builds rows from the cut, and the card's second tab builds the rest
-  on demand in `_loadChunk` chunks (400 archived rows: ~600 ms, offscreen). The card is not a row of
-  its own — it rides on the first row still sent verbatim, so edit/regenerate addressing and the
-  model's indices did not move; `_locateCompaction` returns 0 when folded even if that row no longer
-  names `upToId`, because the card is the only route back to the archive. `_foldAboveSeam` handles a
-  compaction that fires mid-session (one `messages.remove(0, k)`, never a per-row loop) and moves
-  `liveIndex`/`pendingUserRow` with it. A search hit inside the fold sets `Chat.archiveJump`: the
-  card opens its archive and scrolls there instead of saying "not found". `count` is how many
-  messages the *current* summary stands in for — one summary is in play at a time, and a later
-  compaction recomputes the cut against the whole history — not a sum over every compaction.
-  `Store.dropStaleCompaction` forgets the record when an edit or regenerate removes its cut point.
+- **The compacted prefix is folded, not rendered.** It is what the model no longer reads and most of a
+  long session's rows: a 460-message session went from 460 rows to 60. `Chat.loadSession` builds rows
+  from the cut; the card's second tab builds the rest on demand in `_loadChunk` chunks (400 rows:
+  ~600 ms) inside its own bounded list, so they stay virtualized. The card is not a row of its own — it
+  rides on the first row still sent verbatim, so edit/regenerate addressing and the model's indices did
+  not move. `_locateCompaction` falls back to row 0 only when the id is not found *and* the prefix is
+  folded: checked first, it pinned every later compaction to row 0, so a second one folded nothing.
+  `_foldAboveSeam` handles a compaction that fires mid-session (one `messages.remove(0, k)`, never a
+  per-row loop) and moves `liveIndex`/`pendingUserRow` with it. A search hit inside the fold sets
+  `Chat.archiveJump`: the card opens its archive and scrolls there. `count` is how many messages the
+  *current* summary stands in for — one summary is in play; a later compaction recomputes the cut
+  against the whole history.
 - **Compaction measures the request, not the transcript.** `maybeCompact` compares
   `sentCost(hist, from, record)` — the summary message plus the messages after the cut — against the
   threshold. Measuring `hist` instead looks equivalent and is not: the stored transcript never shrinks,
@@ -339,14 +343,11 @@ fixed delay — a load issued before the socket is up fails silently and reports
   `On`, `Remove`), wrong only where the two places must read differently — which is why the appearance
   page says "Interface scale" and "Font scale" rather than "Scale" twice. Word them differently; do
   not add context support to the loader.
-- **The settings search lives in the sidebar, not in the page.** The field is the first child of
-  `SettingsSidebar`'s nav column (above the tabs, like dux-files), and the sidebar owns the text;
-  `SettingsContent.searchQuery` is bound to it, and the content pane renders the hits as a
-  `SettingsPage` over the pages with the header reading "Search results". Per-page hit counts show on
-  the sidebar tabs. Two consequences of that ownership: a property bound from a parent **cannot be
-  assigned from the child**, so the result list asks for a page (`pageRequested`) and for the field to
-  be emptied (`searchDismissed`) rather than setting `currentIndex` or `searchQuery` itself — doing it
-  the direct way silently does nothing and leaving a query in the box while the page under it changes.
+- **The settings search lives in the sidebar, not in the page.** The sidebar owns the text and
+  `SettingsContent.searchQuery` binds to it. The consequence of that ownership: a property bound from a
+  parent **cannot be assigned from the child**, so the result list asks for a page (`pageRequested`) and
+  for the field to be emptied (`searchDismissed`) rather than assigning `currentIndex` or `searchQuery`
+  — the direct way silently does nothing.
 - **The settings search reads the widget tree, and only works because of `visible` semantics.** There is
   no index: `_collectRows` walks the live rows per keystroke, affordable because a page is a few dozen
   widgets. Two things are easy to undo by accident: pages are kept **visible** during a search and moved

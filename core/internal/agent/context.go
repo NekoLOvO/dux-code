@@ -139,6 +139,10 @@ func (r *Runner) maybeCompact(ctx context.Context, rn *run, client llm.Client, m
 	// Nothing would be gained: a cut at or before the current one replaces the summary with the same
 	// text at the same boundary, at the price of another request.
 	if cut <= 0 || cut <= from {
+		// "Compaction is on but nothing happened" is a question only this line can answer, and it was
+		// silent: a session at 80% of its window with no summary looked like a bug in the UI.
+		applog.Infof("session %s is over the compaction threshold (%d > %d) but there is nothing to fold (cut %d, current cut %d)",
+			rn.sessionID, sent, threshold, cut, from)
 		return
 	}
 
@@ -156,6 +160,9 @@ func (r *Runner) maybeCompact(ctx context.Context, rn *run, client llm.Client, m
 		Count:   cut,
 		At:      time.Now().UnixMilli(),
 	}
+	applog.Infof("compacted session %s: %d messages folded into a summary, request %d -> %d tokens (threshold %d)",
+		rn.sessionID, cut, sent, sentCost(hist, cut, c), threshold)
+
 	if err := r.store.SetCompaction(rn.sessionID, c); err != nil {
 		applog.Warnf("failed to save the compaction (session %s): %v", rn.sessionID, err)
 		return

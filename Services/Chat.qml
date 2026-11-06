@@ -271,6 +271,21 @@ QtObject {
         _foldAboveSeam()
     }
 
+    // A row copied into a plain object.
+    //
+    // `messages.get(i)` hands back a model element, not a value: appending it to another ListModel
+    // copies nothing, and the archive renders rows with no text at all. Only the roles the archive
+    // delegate reads are carried over.
+    function _rowCopy(r) {
+        return {
+            "msgIds": r.msgIds || "",
+            "isUser": r.isUser === true,
+            "kind": r.kind || "text",
+            "rawText": r.rawText || "",
+            "toolsJson": r.toolsJson || "[]"
+        }
+    }
+
     // Rows folded into the archive, waiting for the archive to be built before they can join it.
     property var _queuedFolded: []
 
@@ -286,11 +301,11 @@ QtObject {
         var k = compactionRow
         if (_archivedBuilt) {
             for (var i = 0; i < k; i++)
-                archived.append(messages.get(i))
+                archived.append(_rowCopy(messages.get(i)))
         } else {
             // buildArchive has not run, so its rows must land first or the order would be wrong.
             for (var j = 0; j < k; j++)
-                _queuedFolded.push(messages.get(j))
+                _queuedFolded.push(_rowCopy(messages.get(j)))
         }
         // Indices that point into the model move up with the rows.
         if (liveIndex >= 0)
@@ -304,13 +319,6 @@ QtObject {
     // The cut point is a message id; the row is found by id because rows merge and drop messages.
     function _locateCompaction() {
         var row = -1
-        // Folded: the transcript starts at the cut, so the seam is the first row whether or not that
-        // row still names the id. Searching would return -1 if the cut message were ever dropped from
-        // the rows, and the card is the only way back to the archive — losing it would lose them.
-        if (compaction && (archived.count > 0 || _archivedMessages.length > 0)) {
-            compactionRow = 0
-            return
-        }
         if (compaction) {
             for (var i = 0; i < messages.count; i++) {
                 if (String(messages.get(i).msgIds || "").split(",").indexOf(compaction.upToId) !== -1) {
@@ -319,6 +327,15 @@ QtObject {
                 }
             }
         }
+        // Not found anywhere in the rows, and the prefix is folded: then the seam is the first row
+        // whichever id it names. Without this the card could disappear — and the card is the only way
+        // back to the archive. It must stay a *fallback*, though: checked first it would pin every
+        // later compaction to row 0, so a second one would fold nothing and leave its own boundary
+        // drawn in the wrong place.
+        // archived.count is 0 until the card's tab is opened, so the loaded-but-not-yet-built prefix
+        // counts too, or the fallback would not apply exactly when it is needed (right after a load).
+        if (compaction && row < 0 && (archived.count > 0 || _archivedMessages.length > 0))
+            row = 0
         compactionRow = row
     }
 
@@ -537,7 +554,10 @@ QtObject {
     // Build the archive a chunk at a time, the way a load does: a long prefix is hundreds of rows, and
     // putting them all into the model in one turn of the event loop is what freezes the window.
     function buildArchive() {
-        if (_archivedBuilt || _archivedMessages.length === 0)
+        // Not "nothing to build": a compaction that fired while this window was open folded rows into
+        // _queuedFolded without any _archivedMessages behind them, and returning here would leave the
+        // archive permanently empty.
+        if (_archivedBuilt)
             return
         _archivedBuilt = true
         var rows = _buildRows(_archivedMessages, 0, _archivedMessages.length, _archivedCallArgs)
