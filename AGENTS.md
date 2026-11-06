@@ -60,6 +60,7 @@ decoration are the compositor's business. That is a design choice, not a TODO.
 | `core/internal/llm/` | provider clients (openai, anthropic, gemini, responses) and error classification |
 | `core/internal/tools/` | tool implementations, path guard, sandbox, approval gate |
 | `core/internal/{store,config,tasks,mcp,skills,search,ipc}/` | state and plumbing |
+| `core/internal/atomicfile/` | replace-by-rename for every file the daemon rewrites whole |
 | `tools/check-upstream.sh` | Theme + submodule contract check |
 | `tools/check-windows.py` | every `FloatingWindow` instance names a parent window |
 | `docs/`, `UPSTREAM.md` | design notes (English) |

@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/NekoLOvO/dux-code/core/internal/atomicfile"
 	"github.com/NekoLOvO/dux-code/core/internal/store"
 )
 
@@ -319,8 +320,9 @@ func (s *Store) saveLocked() error {
 	if err != nil {
 		return err
 	}
-	// 0600: a prompt may hold private content.
-	if err := os.WriteFile(Path(), append(data, '\n'), 0o600); err != nil {
+	// 0600: a prompt may hold private content. Atomic, because one file holds every task: a write cut
+	// short by a crash would take the whole list with it, not just the task being edited.
+	if err := atomicfile.WriteFile(Path(), append(data, '\n'), 0o600); err != nil {
 		return fmt.Errorf("write %s: %w", Path(), err)
 	}
 	return nil

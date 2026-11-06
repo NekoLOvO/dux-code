@@ -16,6 +16,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/NekoLOvO/dux-code/core/internal/atomicfile"
 )
 
 // Provider is one API endpoint plus the models fetched from it.
@@ -463,11 +465,7 @@ func (c *Config) Save() error {
 		return err
 	}
 	data = append(data, '\n')
-	tmp := Path() + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, Path())
+	return atomicfile.WriteFile(Path(), data, 0o600)
 }
 
 // FixDefaults recomputes derived fields (a default model pointing at nothing gets replaced). Call

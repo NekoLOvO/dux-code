@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/NekoLOvO/dux-code/core/internal/atomicfile"
 	"github.com/NekoLOvO/dux-code/core/internal/llm"
 	"sort"
 	"strings"
@@ -450,11 +451,7 @@ func (s *Store) save(id string) error {
 		return err
 	}
 
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, append(data, '\n'), 0o600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, path)
+	return atomicfile.WriteFile(path, append(data, '\n'), 0o600)
 }
 
 // NewID returns a short, human-readable id.

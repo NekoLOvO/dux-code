@@ -18,6 +18,7 @@ import (
 
 	"github.com/NekoLOvO/dux-code/core/internal/agent"
 	"github.com/NekoLOvO/dux-code/core/internal/applog"
+	"github.com/NekoLOvO/dux-code/core/internal/atomicfile"
 	"github.com/NekoLOvO/dux-code/core/internal/autostart"
 	"github.com/NekoLOvO/dux-code/core/internal/config"
 	"github.com/NekoLOvO/dux-code/core/internal/files"
@@ -398,7 +399,9 @@ func route(_ context.Context, w *ipc.Writer, req ipc.Request, sub *ipc.Subscribe
 			w.RespondError(req.ID, err.Error())
 			return
 		}
-		if err := os.WriteFile(full, append(body, '\n'), 0o644); err != nil {
+		// A new file, but written whole or not at all: a crash mid-write would otherwise leave a
+		// truncated export behind that reads as a corrupt session.
+		if err := atomicfile.WriteFile(full, append(body, '\n'), 0o644); err != nil {
 			w.RespondError(req.ID, err.Error())
 			return
 		}

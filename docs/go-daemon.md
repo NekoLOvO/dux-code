@@ -58,6 +58,11 @@ one corrupt file does not take the rest down (unreadable files are skipped with 
 
 The title comes from the first user message (`store.deriveTitle`, 42 runes, truncated).
 
+Every one of these files is replaced, never truncated in place: `core/internal/atomicfile` writes a
+temporary in the same directory and renames it over the target, so a crash mid-write leaves the previous
+file intact. That matters most for `tasks.json` and `config.json` — one file holds every task, and the
+config holds every provider and key.
+
 ## Tools
 
 The line is "does it have side effects", not "is it important":
