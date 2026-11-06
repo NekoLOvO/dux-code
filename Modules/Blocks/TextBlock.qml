@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Common
+import qs.Services
 import qs.DCommon.Common
 import "../../Common/Blockizer.js" as Blockizer
 
@@ -64,6 +65,15 @@ TextEdit {
         _shown = html;
         text = html;
     }
+
+    // Selecting here clears whatever was selected elsewhere — another paragraph, a code card, a
+    // reply further up. Qt only does that within one TextEdit; see Services/Selection.qml.
+    onSelectedTextChanged: if (selectedText !== "") Selection.claim(root)
+    // A click is a new selection too, of nothing, and the old one should not survive it. Focus is
+    // the signal for that: the cursor also moves when the text is rewritten, and a streaming reply
+    // would take the selection away from whatever the user was reading further up.
+    onActiveFocusChanged: if (activeFocus) Selection.claim(root)
+    Component.onDestruction: Selection.release(root)
 
     onBlkChanged: _refresh()
     onProseStyleChanged: _refresh()
