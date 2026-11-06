@@ -497,6 +497,9 @@
   "Focus ring": {
     "Focus ring": "焦點框"
   },
+  "Folded %1 earlier messages into a summary.": {
+    "Folded %1 earlier messages into a summary.": "已將先前 %1 則訊息壓縮成摘要。"
+  },
   "Folder name": {
     "Folder name": "資料夾名稱"
   },
@@ -797,6 +800,9 @@
   "Open Dux Code": {
     "Open Dux Code": "開啟 Dux Code"
   },
+  "Open the summary of the compacted conversation": {
+    "Open the summary of the compacted conversation": "開啟已壓縮對話的摘要"
+  },
   "Optional — empty uses the daemon default": {
     "Optional — empty uses the daemon default": "選填——留空就用 daemon 預設"
   },
@@ -1057,6 +1063,9 @@
   },
   "Shell command": {
     "Shell command": "Shell 指令"
+  },
+  "Show": {
+    "Show": "顯示"
   },
   "Show Dux Code in the system tray.": {
     "Show Dux Code in the system tray.": "在系統匣顯示 Dux Code。"

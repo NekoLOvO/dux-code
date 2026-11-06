@@ -130,10 +130,33 @@ QtObject {
     // and scrolls to it, then clears this.
     property string archiveJump: ""
     signal jumpRequested(int index)
-    // Reveal the compaction seam. It is the first row after a fold, so this is "go to the top" rather
-    // than "jump to an index": ListView centres an index jump, which for row 0 lands above the
+    // Scroll to the compaction seam. It is the first row after a fold, so this is "go to the top"
+    // rather than "jump to an index": ListView centres an index jump, which for row 0 lands above the
     // content (a negative contentY and an empty band).
     signal seamRevealRequested()
+
+    // Whether the summary card is expanded.
+    //
+    // It lives here, not in CompactionDivider, because the divider is a delegate: past exactItemLimit
+    // the row is recycled, and a card opened from the chip above the composer would be collapsed again
+    // by the time its row is built.
+    property bool seamOpen: false
+
+    // Go to the summary card and open it. Both halves are needed: the card is a seam at the top of the
+    // transcript, so on a view that was following the reply it is thousands of pixels up, and a
+    // collapsed seam is a hairline that nothing would recognise as the summary someone asked for.
+    function openSeam() {
+        seamOpen = true
+        seamRevealRequested()
+    }
+
+    // One wording for the seam pill, the chip above the composer and assistive technology; a second
+    // copy of this sentence would drift from the first.
+    function compactionLabel(n) {
+        return n === 1
+            ? I18n.tr("Summary of 1 earlier message", "compaction seam in the transcript: a summary replaced exactly one message")
+            : I18n.tr("Summary of %1 earlier messages", "compaction seam in the transcript: a summary replaced this many messages").arg(n)
+    }
 
     // Around `messages.remove(0, k)` in _foldAboveSeam.
     //
@@ -338,7 +361,7 @@ QtObject {
             {
                 "actionLabel": I18n.tr("Show", "toast action: scroll to the compaction summary card"),
                 "action": function () {
-                    chat.seamRevealRequested();
+                    chat.openSeam();
                 }
             });
     }
@@ -397,6 +420,7 @@ QtObject {
         liveIndex = -1
         compaction = null
         compactionRow = -1
+        seamOpen = false
         sessionTokens = 0
         if (!id) {
             loading = false

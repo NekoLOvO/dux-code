@@ -720,6 +720,11 @@
     "context": "appearance settings section label | focus ring toggle label"
   },
   {
+    "term": "Folded %1 earlier messages into a summary.",
+    "translation": "",
+    "context": "toast after compaction folded the earlier part of the conversation into the summary card"
+  },
+  {
     "term": "Follow Dux Shell colors, falling back to a preset.",
     "translation": "",
     "context": "color source description for auto"
@@ -1145,6 +1150,11 @@
     "context": "tray menu item to show the main window"
   },
   {
+    "term": "Open the summary of the compacted conversation",
+    "translation": "",
+    "context": "compaction chip above the composer: what clicking it does"
+  },
+  {
     "term": "Optional — empty uses the daemon default",
     "translation": "",
     "context": "task form working directory hint"
@@ -1518,6 +1528,11 @@
     "term": "Shell command",
     "translation": "",
     "context": "permission dialog shell kind label"
+  },
+  {
+    "term": "Show",
+    "translation": "",
+    "context": "toast action: scroll to the compaction summary card"
   },
   {
     "term": "Show Dux Code in the system tray.",

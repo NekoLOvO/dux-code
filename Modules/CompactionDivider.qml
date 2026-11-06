@@ -28,17 +28,15 @@ Item {
     // How many messages the summary replaced (the daemon's count).
     property int count: 0
     property string summary: ""
-    property bool open: false
 
     // The folded prefix, as transcript rows (Chat.archived). Built lazily, chunk by chunk.
     property var archive: null
     // A message id to reveal in the archive (a search landed there). Cleared once shown.
     property string revealId: ""
 
-    // One wording for the pill and for assistive technology; a second copy would drift.
-    readonly property string label: count === 1
-        ? I18n.tr("Summary of 1 earlier message", "compaction seam in the transcript: a summary replaced exactly one message")
-        : I18n.tr("Summary of %1 earlier messages", "compaction seam in the transcript: a summary replaced this many messages").arg(count)
+    // One wording for the pill and for assistive technology; a second copy would drift. It is shared
+    // with the chip above the composer, which stands for the same summary from a different place.
+    readonly property string label: Chat.compactionLabel(count)
 
     // Which tab the card is showing. The summary is the default: it is short, it is what the model
     // actually reads, and the archive can be hundreds of rows.
@@ -77,7 +75,7 @@ Item {
     }
 
     onRevealIdChanged: if (revealId !== "") {
-        root.open = true
+        Chat.seamOpen = true
         root.selectTab("archive")
     }
 
@@ -136,7 +134,7 @@ Item {
 
                 StyledText {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: root.open ? "expand_less" : "expand_more"
+                    text: Chat.seamOpen ? "expand_less" : "expand_more"
                     font.family: Fonts.icons
                     font.pixelSize: Theme.iconSizeSmall
                     color: Theme.surfaceVariantText
@@ -150,7 +148,7 @@ Item {
                 cursorShape: Qt.PointingHandCursor
                 Accessible.role: Accessible.Button
                 Accessible.name: root.label
-                onClicked: root.open = !root.open
+                onClicked: Chat.seamOpen = !Chat.seamOpen
             }
         }
 
@@ -163,7 +161,7 @@ Item {
             id: card
 
             width: parent.width
-            visible: root.open
+            visible: Chat.seamOpen
             height: visible ? content.implicitHeight + pad * 2 : 0
             pad: Theme.spacingM
             clipContent: true
