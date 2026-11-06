@@ -27,14 +27,14 @@ jobs:
           echo "::error::This workflow builds releases from v* tags; '${{ github.ref_name }}' is not one."
           exit 1
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: recursive
           # git describe and git rev-list both need the history, and the tag has to be present
           # or the version falls back to 0.0.0.
           fetch-depth: 0
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: core/go.mod
           cache-dependency-path: core/go.sum
@@ -52,7 +52,7 @@ jobs:
           # "dist/dcode-linux-amd64.tar.gz" is useless to someone who just downloaded the asset.
           ( cd dist && sha256sum "dcode-linux-${GOARCH}.tar.gz" > "dcode-linux-${GOARCH}.sha256" )
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: dcode-linux-${{ matrix.arch }}
           path: |
@@ -64,7 +64,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true

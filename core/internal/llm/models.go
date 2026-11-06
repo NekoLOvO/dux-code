@@ -54,16 +54,31 @@ func FetchModels(ctx context.Context, p config.Provider) ([]ModelInfo, error) {
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, base+"/models", nil)
+	// Gemini returns 50 models per page by default, which is fewer than it publishes: the rest of the
+	// list would be missing from the picker with no sign that it was cut off.
+	listURL := base + "/models"
+	gemini := strings.EqualFold(p.Type, "gemini")
+	if gemini {
+		listURL += "?pageSize=1000"
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, listURL, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Accept", "application/json")
-	if strings.EqualFold(p.Type, "anthropic") {
+	switch {
+	case strings.EqualFold(p.Type, "anthropic"):
 		// Anthropic uses x-api-key plus a version header; a Bearer token is rejected.
 		req.Header.Set("x-api-key", key)
 		req.Header.Set("anthropic-version", anthropicVersion)
-	} else if key != "" {
+	case gemini:
+		// Gemini's native endpoint reads the key from x-goog-api-key. A Bearer token is only for the
+		// OpenAI-compatible /v1beta/openai front end, and this provider deliberately does not use that
+		// one (it has no google_search) — sending Bearer here is answered with "Request had invalid
+		// authentication credentials. Expected OAuth 2 access token".
+		req.Header.Set("x-goog-api-key", key)
+	case key != "":
 		req.Header.Set("Authorization", "Bearer "+key)
 	}
 
@@ -119,8 +134,14 @@ func parseModels(body []byte) ([]ModelInfo, error) {
 			} `json:"top_provider"`
 		} `json:"data"`
 		Models []struct {
-			ID   string `json:"id"`
-			Name string `json:"name"`
+			ID          string `json:"id"`
+			Name        string `json:"name"`
+			DisplayName string `json:"displayName"`
+			// Gemini's native list is the one upstream that puts the limits under models[] rather
+			// than data[]: {"models":[{"name":"models/gemini-2.5-pro","displayName":"…",
+			// "inputTokenLimit":1048576,"outputTokenLimit":65536}]}.
+			InputTokenLimit  int `json:"inputTokenLimit"`
+			OutputTokenLimit int `json:"outputTokenLimit"`
 		} `json:"models"`
 	}
 	if err := json.Unmarshal(body, &envelope); err == nil {
@@ -151,7 +172,17 @@ func parseModels(body []byte) ([]ModelInfo, error) {
 			if id == "" {
 				continue
 			}
-			out = append(out, ModelInfo{ID: id, Name: m.Name})
+			// Gemini names a model "models/gemini-2.5-pro". The prefix is a resource path, not part of
+			// the name: chat already trims it, and leaving it on the id would put "models/" in the
+			// model picker and in config.json.
+			id = strings.TrimPrefix(id, "models/")
+			// displayName is Gemini's title ("Gemini 2.5 Pro"); Ollama has none and falls back to the id.
+			out = append(out, ModelInfo{
+				ID:        id,
+				Name:      firstNonEmpty(m.DisplayName, m.Name),
+				Context:   m.InputTokenLimit,
+				MaxOutput: m.OutputTokenLimit,
+			})
 		}
 		if len(out) > 0 {
 			return dedupe(out), nil
@@ -189,6 +220,16 @@ func snippet(b []byte) string {
 		return s[:300] + "…"
 	}
 	return s
+}
+
+// firstNonEmpty returns the first value that is not blank.
+func firstNonEmpty(values ...string) string {
+	for _, v := range values {
+		if strings.TrimSpace(v) != "" {
+			return v
+		}
+	}
+	return ""
 }
 
 // firstPositive returns the first number greater than zero; 0 when none is.
