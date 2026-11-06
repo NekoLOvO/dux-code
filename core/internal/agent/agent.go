@@ -80,6 +80,19 @@ type run struct {
 	// since a run never changes provider.
 	nativeSearch bool
 
+	// The text of the step in flight, as it is being written.
+	//
+	// The transcript only ever holds finished steps ("only finished content is written"), so a window
+	// that opens or comes back to this session mid-reply has nothing to draw for the step running right
+	// now: it shows the user message and an empty bubble until run.finished. This is what fills that
+	// gap — session.get reports it so the UI can start the bubble with the prefix already written.
+	//
+	// Reset at the start of every attempt, because the UI opens a new bubble per step and a retried
+	// attempt writes its text from the beginning again.
+	partMu    sync.Mutex
+	partText  strings.Builder
+	partThink strings.Builder
+
 	// Skill state. An activated skill may narrow which tools later steps may use, while the registry is
 	// shared by the whole daemon — changing it would pollute other running sessions, so the restriction
 	// stays on the run.
@@ -223,6 +236,56 @@ func (r *Runner) Busy(sessionID string) bool {
 		}
 	}
 	return false
+}
+
+// RunningText reports the step a session is writing right now: the text and the thinking that the
+// transcript does not have yet, because neither is persisted until the step ends.
+//
+// It is the same run Busy reports, so a caller can ask both and get an answer about one turn. Empty
+// strings mean "nothing written yet" and "not running" alike; the caller already knows which from Busy.
+func (r *Runner) RunningText(sessionID string) (text, reasoning string) {
+	r.mu.Lock()
+	var rn *run
+	for _, candidate := range r.runs {
+		if candidate.sessionID == sessionID {
+			rn = candidate
+			break
+		}
+	}
+	r.mu.Unlock()
+	if rn == nil {
+		return "", ""
+	}
+	rn.partMu.Lock()
+	defer rn.partMu.Unlock()
+	return rn.partText.String(), rn.partThink.String()
+}
+
+// beginAttempt clears the in-flight buffers. Called once per model attempt: a retry rewrites the text
+// from the start, and the UI would otherwise be handed the same sentence twice.
+func (rn *run) beginAttempt() {
+	rn.partMu.Lock()
+	rn.partText.Reset()
+	rn.partThink.Reset()
+	rn.partMu.Unlock()
+}
+
+func (rn *run) addPart(text string) {
+	if text == "" {
+		return
+	}
+	rn.partMu.Lock()
+	rn.partText.WriteString(text)
+	rn.partMu.Unlock()
+}
+
+func (rn *run) addThink(text string) {
+	if text == "" {
+		return
+	}
+	rn.partMu.Lock()
+	rn.partThink.WriteString(text)
+	rn.partMu.Unlock()
 }
 
 // prepare resolves the model and builds a client. Shared by Send and Regenerate.
@@ -580,6 +643,7 @@ func (r *Runner) execute(ctx context.Context, rn *run, client llm.Client, model 
 				ReasoningAuto: rn.reasoning == "" && len(model.Reasoning) > 0,
 				NativeSearch:  rn.nativeSearch,
 				OnReasoning: func(text string) {
+					rn.addThink(text)
 					stepReasoning.WriteString(text)
 					r.publish(map[string]any{
 						"kind":      "reasoning.delta",
@@ -855,6 +919,7 @@ var retryBaseDelay = 800 * time.Millisecond
 // same words twice, which is worse than failing.
 func (r *Runner) streamStep(ctx context.Context, rn *run, client llm.Client, req llm.Request) (llm.Result, error) {
 	for attempt := 0; ; attempt++ {
+		rn.beginAttempt()
 		res, spoke, err := r.streamOnce(ctx, rn, client, req)
 		if err == nil {
 			return res, nil
@@ -914,6 +979,7 @@ func (r *Runner) streamOnce(ctx context.Context, rn *run, client llm.Client, req
 	}()
 
 	res, err = client.Stream(ctx, req, func(text string) {
+		rn.addPart(text)
 		bufMu.Lock()
 		if text != "" {
 			got = true

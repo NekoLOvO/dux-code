@@ -151,22 +151,21 @@ fixed delay — a load issued before the socket is up fails silently and reports
   draws a table grid only from the *table's* `border` plus `border-collapse` — a border on a cell
   paints nothing, there is no per-side border, and a cell background is inset by `cellpadding`.
   Hence the bold header instead of a shaded one.
-- **Markdown is one document, so structure has to be HTML — and only what Qt draws counts.**
-  `Blockizer.js` parses paragraphs, h1–h6, nested lists (`start`, task boxes), nested quotes,
-  tables, fenced code, and reference / footnote definitions, then emits one HTML string per prose
-  run. Measured, not guessed: `<br/>`, `<ol start>`, nested `<ul>`, `<sub>`, `<sup>`, `<u>`, `<s>`
-  and a block-level `background-color` work; a `border` on a block element paints **nothing** (so a
-  quote is a tint, not a bar) and a table cell's background covers only its **first line** (so a
-  cell cannot be a bar either). Check such a claim by rendering offscreen and reading pixels. A
-  fence **inside** a quote or list item is a monospace `<pre>` in place, not a `CodeBlock` card — a
-  card is a widget and the run is one TextEdit; the lost highlight is what keeps the quote in one
-  piece. Task boxes are the ☑/☐ glyphs, footnote markers are not links (the definitions are
-  collected at the end), and an image becomes `[image: alt]` because rich text cannot fetch one.
+- **Markdown is one document, so structure has to be HTML — and only what Qt draws counts.** Measured,
+  not guessed: `<br/>`, `<ol start>`, nested `<ul>`, `<sub>`, `<sup>`, `<u>`, `<s>` and a block-level
+  `background-color` work; a `border` on a block element paints **nothing** (a quote is a tint, not a
+  bar) and a table cell's background covers only its **first line**. Check such a claim offscreen and
+  read pixels. A fence inside a quote is a monospace `<pre>` in place, not a card — a card is a widget,
+  and the quote holding together matters more than its highlight. Task boxes are ☑/☐ glyphs, footnote
+  markers are not links, an image becomes `[image: alt]`.
 - **Trailing whitespace is a hard break, so a paragraph line loses its indent and nothing else.**
-  `lines[i].replace(/^[ \t]+/, "")`, never `trim()`: two trailing spaces mean `<br/>`, and trimming
-  is how every hard break in the stress file became a space. Same for `/\\$/`. And a blank-line
-  branch that jumps the index must sit in a `while`, not a `for` — a `continue` re-applies the `i++`
-  and skips the line it just moved to (that is how a footnote's second paragraph went missing).
+  `replace(/^[ \t]+/, "")`, never `trim()`: two trailing spaces mean `<br/>`. Same for `/\\$/`. And a
+  blank-line branch that jumps the index must sit in a `while`, not a `for` — the `continue` re-applies
+  the `i++` and skips the line it just moved to (a footnote's second paragraph went missing that way).
+- **Inline placeholders nest, so restoring them takes a loop.** A code span inside a link label is a
+  token inside a token; one pass leaves `\u0000N\u0000` in the document. Each value refers only to
+  tokens created before it, so repeating terminates. A link label also needs the emphasis pass before
+  it is held, or `[**bold**](url)` draws its asterisks.
 - **A background inside `<pre>` does not stay on its line, so a painted line gets its own block.**
   Qt paints a span's background across the line break: a diff card's red run coloured the *tail of
   the next line*, and the green line below it looked half red. Closing the span before the newline
@@ -196,20 +195,27 @@ fixed delay — a load issued before the socket is up fails silently and reports
   a turn cancelled at the question, or a question voided with the connection, would otherwise leave
   the card spinning and offer a way back to a dialog nothing is waiting on. Esc is still Skip —
   different decisions, and the buttons say so.
-- **A window that loads mid-reply adopts the turn instead of ignoring it.** The daemon runs the turn;
-  only the streaming state lived in the QML process, so a hot reload (or a fresh `dcode ui`) left a
-  composer saying "send" while text was still arriving, because every event was dropped at the
-  `Agent.localRunId` guard. `session.get` already reports `busy`, and that is the signal to adopt:
+- **Every turn belongs to the daemon, so leaving a session detaches from it — never cancels it.**
+  Only the streaming state ever lived in the QML process, so a hot reload (or a fresh `dcode ui`) left
+  a composer saying "send" while text was still arriving, because every event was dropped at the
+  `Agent.localRunId` guard. `session.get` reports `busy`, and that is the signal to adopt:
   `Chat._adoptRunningTurn` asks `Agent.adopt`, which takes the runId from the first event (the daemon
-  does not hand it out) and opens one streaming row for the text still to come. What that row cannot
-  show is the prefix already written before the window loaded — it arrives with `run.finished`, which
-  carries the persisted text. Three consequences worth keeping: an adopted turn is the **daemon's**, so
-  leaving the session releases it (`Agent.release`) rather than cancelling — otherwise switching away
-  would kill a reply the user is waiting for; a stop before any event has named a runId goes through
+  does not hand it out) and opens one streaming row for the text still to come.
+  `Chat.loadSession` calls `Agent.detach()` — **no `chat.cancel`** — and not only for turns started
+  elsewhere: switching away from a reply this window started used to cancel it, so opening another
+  conversation threw away the answer being read. Stopping a turn is the stop button's job. Coming back
+  re-adopts (the daemon is still writing); a stop before any event named a runId goes through
   `chat.cancelSession`, since there is no id to cancel; and because "busy" is a snapshot, a turn that
-  ends in between would leave a spinner forever, so one `session.get` 1.5s later settles it.
-
-  Both APIs reject a request where an assistant message's `tool_calls` are not followed immediately
+  ends in between would spin forever, so one `session.get` 1.5s later settles it.
+- **The step in flight is not in the transcript, so `session.get` carries it.** "Only finished content
+  is written" left a returning window with the user message and an empty bubble until
+  `run.finished`. `Runner.RunningText` holds the current *attempt*'s text and thinking (reset by
+  `beginAttempt`, or a retry hands the same sentence out twice) and `session.get` returns it as
+  `runningText` / `runningReasoning`; `_adoptRunningTurn` seeds the bubble with it. It comes from the
+  daemon rather than a UI cache on purpose: persisted rows end at the last finished step, so a
+  session-keyed cache would duplicate the prefix whenever the turn passed a tool step while away.
+- **A transcript whose `tool_calls` do not pair is permanently unsendable.** Both APIs reject a request
+  where an assistant message's `tool_calls` are not followed immediately
   by one `tool` message per id, and the rejection is not retried: a stored transcript with a gap fails
   every later turn. `historyMessages` therefore *pairs while building* — a call with no result gets
   `toolInterrupted`, a result whose call is not waiting gets dropped, empty output becomes
@@ -226,30 +232,23 @@ fixed delay — a load issued before the socket is up fails silently and reports
   duplicated up to twelve rows of its transcript. The same rule covers the other half: two loads of one
   session (a reload on connect racing a click) both pass the `id === activeId` check, so the callback
   also compares `_loadToken` or the transcript is installed twice.
-- **Loading a session is per-row insertion, and it has to be spread out.** Measured on a
-  1,900-message session (940 rows): the daemon reads it in 141ms and the row builder takes 17ms, but
-  making those rows the list's model took **8.5 seconds**, blocked end to end — long enough for
-  Hyprland to put "application not responding" over the window. An attempt to fix the responsiveness
-  instead of the total: insert `Chat._loadChunk` rows, hand the event loop back with `Qt.callLater`,
-  repeat. The cost per row does not change, but the window answers pings between chunks. Two things
-  ride on the same flag and matter as much: `Modules/MessageList.qml` must not `stickToEnd` while
-  `Chat.loading` (that is a layout pass and a fresh delegate per row), and it scrolls once on
-  `rowsLoaded`, twice, because the first jump reveals rows that were never measured. Anything that
-  writes to `messages` mid-load has to call `Chat._finishRows()` first (see `Chat.send`), or the rows
-  still queued land underneath what was just written.
-  Still open: the total is seconds on a very long session, so the real answer is paging (render the
-  last N rows, load more at the top). That is a feature, not a tweak — it has to handle the scroll
-  anchor, search jumps into unloaded rows, edit/regenerate addressing by message id, and a compaction
-  seam outside the window.
+- **Loading a session is per-row insertion, and it has to be spread out.** Measured on 940 rows: the
+  daemon read them in 141ms, building them took 17ms, and making them the list's model took **8.5
+  seconds** blocked end to end — long enough for Hyprland to overlay "application not responding". So
+  `Chat._loadChunk` rows are inserted per turn of the event loop with `Qt.callLater`. The cost per row
+  does not change; the window answers pings in between. Two things ride on the same flag:
+  `Modules/MessageList.qml` must not `stickToEnd` while `Chat.loading` (a layout pass and a fresh
+  delegate per row), and it scrolls twice on `rowsLoaded` because the first jump reveals rows never
+  measured. Anything writing to `messages` mid-load must call `Chat._finishRows()` first (see
+  `Chat.send`). Still open: the total is seconds on a very long session, so the answer is paging — a
+  feature, not a tweak (scroll anchor, search jumps into unloaded rows, edit/regenerate by message id,
+  a compaction seam outside the window).
 - **A model reset is not the accelerator it looks like.** Inserting 1,121 rows into a detached model
-  then assigning it (`Chat.messages = fresh`) measured 119ms; appending the same rows with no view
-  attached measured 10ms; and both gave an identical `contentHeight` (474160) once the view was
-  pointed at them. The earlier note here claimed a reset was 40x faster and produced a different
-  height — that comparison was between two different row sets, and the height difference was an
-  artifact of the harness, not of the model. The cost was never in the model: it is the view's
-  layout-and-create-a-delegate per inserted row, which is why the chunked insert plus the suppressed
-  follow is what fixed the freeze. Do not reach for a reset as a shortcut; measure both paths on the
-  same array first.
+  then assigning it measured 119ms; appending them with no view attached, 10ms; both gave the same
+  `contentHeight` once the view was pointed at them. The cost was never in the model — it is the
+  view's layout-and-create-a-delegate per inserted row, which is why chunked insertion plus a
+  suppressed follow is the fix. An earlier note here claimed a reset was 40x faster and produced a
+  different height; that compared two different row sets. Measure both paths on the same array first.
 - **`0` is a real value** for `maxOutputTokens`, `maxToolSteps` and `compactAt` — it means "off".
   Do not reintroduce `<= 0 → default`; the migration pins v2 zeros instead. The output cap's default
   is 0: a cap set too low truncates replies where the user cannot see why.
@@ -346,16 +345,13 @@ fixed delay — a load issued before the socket is up fails silently and reports
   be emptied (`searchDismissed`) rather than setting `currentIndex` or `searchQuery` itself — doing it
   the direct way silently does nothing and leaving a query in the box while the page under it changes.
 - **The settings search reads the widget tree, and only works because of `visible` semantics.** There is
-  no index to keep in sync: `_collectRows` walks the live rows on every keystroke, which is affordable
-  because a settings page is a few dozen widgets. Two consequences that are easy to undo by accident:
-  (1) pages are kept **visible** during a search and moved off-screen inside a clipping parent — hiding
-  them makes `child.visible` read false all the way down, and the walk then finds nothing; (2) a Loader
-  that only just became active has no widgets yet, so `_rebuildSearch` re-asks itself (bounded) instead
-  of relying on a signal, and it also waits for `I18n.translationsLoaded`. Rows are already translated
-  at that point, so `I18n.englishFor()` (the reverse map built from the poexport) is what lets an
-  English query match a Chinese UI. `keywords` on `SettingsRow` covers the rest — only where the
-  on-screen wording is not what someone would type ("frosted" for background blur); the title, its
-  card and its page name are indexed anyway.
+  no index: `_collectRows` walks the live rows per keystroke, affordable because a page is a few dozen
+  widgets. Two things are easy to undo by accident: pages are kept **visible** during a search and moved
+  off-screen inside a clipping parent (hiding them makes `child.visible` read false all the way down, so
+  the walk finds nothing), and a Loader that just became active has no widgets yet, so `_rebuildSearch`
+  re-asks itself (bounded) and waits for `I18n.translationsLoaded`. Rows are translated by then, so
+  `I18n.englishFor()` is what lets an English query match a Chinese UI; `keywords` on `SettingsRow`
+  covers wording nobody would type ("frosted" for background blur).
 - Settings dropdowns must keep values that are outside their list visible — otherwise the next click
   silently overwrites a hand-edited config.
 - `Backend.qml:_applyConfig` must not filter falsy values (`> 0`); 0 is meaningful now.

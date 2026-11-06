@@ -174,24 +174,23 @@ QtObject {
         return localRunId;
     }
 
-    // Let go of an adopted turn without stopping it.
+    // Let go of a running turn without stopping it.
     //
-    // It is the daemon's turn, not this window's: leaving the session must not stop work the user
-    // started elsewhere, and coming back adopts it again.
-    function release() {
-        if (localRunId === "" || !_adopted)
+    // The daemon owns every turn, not this window: leaving a session must not kill a reply the user is
+    // waiting for. Switching away detaches — no chat.cancel — so the daemon keeps writing and the
+    // transcript gets the rest; coming back adopts the turn again (see Chat._adoptRunningTurn).
+    //
+    // Stopping a turn is a separate decision, and it is the stop button: Agent.cancel().
+    function detach() {
+        if (localRunId === "")
             return false;
         verifyTimer.stop();
         localRunId = "";
         remoteRunId = "";
         sessionId = "";
-        _adopted = false;
+        waitingSend = false;
         return true;
     }
-
-    property bool _adopted: false
-    onLocalRunIdChanged: if (localRunId !== "" && localRunId.indexOf("run-adopted-") === 0)
-        _adopted = true
 
     // A turn adopted from "this session is busy" has no runId of its own until an event names one.
     // If the turn ended in between — the reply finished in the instant between the daemon answering
@@ -212,7 +211,6 @@ QtObject {
                 agent.localRunId = "";
                 agent.remoteRunId = "";
                 agent.sessionId = "";
-                agent._adopted = false;
                 agent.finished(rid, false, false);
             });
         }
@@ -347,7 +345,6 @@ QtObject {
                 agent.verifyTimer.stop();
                 agent.localRunId = "";
                 agent.remoteRunId = "";
-                agent._adopted = false;
                 agent.halt();
                 agent.finished(rid, (data.status || "") === "cancelled", data.truncated === true);
                 break;

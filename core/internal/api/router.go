@@ -182,7 +182,16 @@ func route(_ context.Context, w *ipc.Writer, req ipc.Request, sub *ipc.Subscribe
 			w.RespondError(req.ID, "session not found")
 			return
 		}
-		w.Respond(req.ID, map[string]any{"session": sess, "busy": deps.Agent.Busy(id)})
+		// The step in flight is not in the transcript yet, so a window that opens mid-reply would show
+		// an empty bubble until it ends. runningText runningReasoning carry what that step has written
+		// so far; both are empty when nothing is running.
+		runningText, runningReasoning := deps.Agent.RunningText(id)
+		w.Respond(req.ID, map[string]any{
+			"session":          sess,
+			"busy":             deps.Agent.Busy(id),
+			"runningText":      runningText,
+			"runningReasoning": runningReasoning,
+		})
 
 	case "session.new":
 		title := req.GetString("title")

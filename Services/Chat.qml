@@ -16,10 +16,6 @@ QtObject {
     property string activeRunId: ""
     property int liveIndex: -1
 
-    // True while this window is showing a turn it did not start (see _adoptRunningTurn): the daemon
-    // was already mid-reply when the window loaded. It changes who may stop the turn.
-    property bool adoptedRun: false
-
     // A question from the model is waiting, and the user put it aside to read the conversation first.
     //
     // The dialog is modal and the daemon is blocked on the answer, so "hide it" cannot mean "dismiss
@@ -283,18 +279,23 @@ QtObject {
 
     // Switch session: reload persisted messages, and drop the streaming run (it belongs to the old one).
     function loadSession(id, done) {
-        // A turn this window started is this window's to stop. An adopted one belongs to the daemon —
-        // leaving the session must not kill a reply the user is waiting for, and coming back adopts
-        // it again where it left off.
-        if (busy) {
-            if (adoptedRun)
-                Agent.release();
-            else
-                Agent.cancel();
-        }
+        // Every turn belongs to the daemon, including one this window started: switching sessions
+        // detaches from it instead of cancelling it. Cancelling here is what made "look at another
+        // conversation while the reply is still coming" throw the reply away — the user was reading a
+        // half-written answer and the switch stopped it.
+        //
+        // Detached, the daemon keeps writing (and persists the rest), and coming back adopts the turn:
+        // session.get says busy and reports what the running step has already written. Stopping a turn
+        // is the stop button's job, not the sidebar's.
+        if (busy)
+            Agent.detach()
         messages.clear()
         loading = true
         _loadToken++
+        // Set by the reply to this load. Cleared here so a failed or superseded load cannot leave a
+        // prefix behind for the next adopt to seed a bubble with.
+        _pendingRunningText = ""
+        _pendingRunningReasoning = ""
         pendingUserRow = -1
         activeRunId = ""
         liveIndex = -1
@@ -332,7 +333,12 @@ QtObject {
             // Set after the rows are built: the seam needs a row to sit above.
             var savedCompaction = res.session.compaction || null
             // session.get reports whether a turn is running; _finishRows acts on it once the rows are in.
+            // The step in flight is not on disk yet, so whatever it has written travels with the answer —
+            // without it, returning to a session mid-reply shows the user message and an empty bubble
+            // until the turn ends.
             _pendingBusy = res.busy === true
+            _pendingRunningText = res.runningText || ""
+            _pendingRunningReasoning = res.runningReasoning || ""
             // The daemon keeps the running total (and recovers it for files written before it
             // existed), so opening a session shows its spend without replaying a single turn.
             const tu = res.session.totalUsage
@@ -464,13 +470,13 @@ QtObject {
         // arriving and nothing on screen moves.
         if (_pendingBusy)
             _adoptRunningTurn()
-        else
-            adoptedRun = false
         if (done) done()
         locateJump()
     }
 
     property bool _pendingBusy: false
+    property string _pendingRunningText: ""
+    property string _pendingRunningReasoning: ""
 
     // Join a turn the daemon is already producing.
     //
@@ -482,13 +488,23 @@ QtObject {
         const rid = Agent.adopt(Sessions.activeId)
         if (rid === "")
             return
-        adoptedRun = true
         activeRunId = rid
         // The daemon does not say when the turn began, and a time counted from now is the honest
         // approximation: it is the part of the turn this window witnessed.
         runStartedAt = Date.now()
         runElapsedMs = 0
         _newStep(rid)
+        // Start the bubble with what the running step has already written. The persisted rows end at
+        // the last finished step, so this prefix is not anywhere in the transcript — and the daemon
+        // reports it because only it holds it. It is replaced wholesale by run.finished.
+        if (_pendingRunningText !== "" || _pendingRunningReasoning !== "") {
+            messages.set(liveIndex, {
+                rawText: _pendingRunningText,
+                reasoning: _pendingRunningReasoning
+            })
+        }
+        _pendingRunningText = ""
+        _pendingRunningReasoning = ""
     }
 
     // ---------- edit / regenerate / branch ----------
@@ -868,8 +884,6 @@ QtObject {
         liveIndex = -1
         runStartedAt = 0
         runElapsedMs = elapsed
-        // An adopted turn ends like any other; the next load asks the daemon again.
-        adoptedRun = false
         // An adopted turn that turns out to be over leaves its placeholder behind: an empty bubble
         // that reads as a reply which said nothing.
         _dropEmptyLiveRow(settled)
