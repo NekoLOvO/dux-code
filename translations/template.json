@@ -1150,11 +1150,6 @@
     "context": "tray menu item to show the main window"
   },
   {
-    "term": "Open the summary of the compacted conversation",
-    "translation": "",
-    "context": "compaction chip above the composer: what clicking it does"
-  },
-  {
     "term": "Optional — empty uses the daemon default",
     "translation": "",
     "context": "task form working directory hint"

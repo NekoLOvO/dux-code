@@ -103,7 +103,7 @@ Item {
         Item {
             id: body
             width: parent.width
-            height: parent.height - toolbar.height - compactionBar.height - composer.height
+            height: parent.height - toolbar.height - composer.height
 
             MessageList {
                 id: list
@@ -125,63 +125,6 @@ Item {
             EmptyState {
                 anchors.fill: parent
                 visible: Chat.messages.count === 0
-            }
-        }
-
-        // --- compaction chip ---
-        //
-        // The summary is drawn as a seam at the top of the transcript, and a seam is a hairline: a fold
-        // fired mid-turn left nothing on screen but a toast, and reopening the session afterwards showed
-        // no sign at all that the earlier part is now a summary. This chip is the one place in the
-        // window that is always in front of the reader — it does not move the scroll position the way
-        // jumping to the seam would, and it is still there tomorrow.
-        Item {
-            id: compactionBar
-
-            width: parent.width
-            height: compactionChip.height + Theme.spacingS
-            visible: Chat.compaction !== null
-
-            Rectangle {
-                id: compactionChip
-
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.bottom: parent.bottom
-                width: chipRow.implicitWidth + Theme.spacingM * 2
-                height: Theme.buttonHeightXS
-                radius: height / 2
-                color: Theme.surfaceContainerHigh
-
-                Row {
-                    id: chipRow
-
-                    anchors.centerIn: parent
-                    spacing: Theme.spacingXS
-
-                    // The same icon as the seam, so the two read as the same thing in two places.
-                    StyledText {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "compress"
-                        font.family: Fonts.icons
-                        font.pixelSize: Theme.iconSizeSmall
-                        color: Theme.surfaceVariantText
-                    }
-
-                    StyledText {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: Chat.compactionLabel(Chat.compaction ? Chat.compaction.count : 0)
-                        font.pixelSize: Theme.fontSizeSmall
-                        color: Theme.surfaceVariantText
-                    }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    Accessible.role: Accessible.Button
-                    Accessible.name: I18n.tr("Open the summary of the compacted conversation", "compaction chip above the composer: what clicking it does")
-                    onClicked: Chat.openSeam()
-                }
             }
         }
 
