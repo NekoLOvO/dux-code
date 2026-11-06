@@ -7,6 +7,10 @@ var RE_QUOTE = /^>\s?(.*)$/
 var RE_UL    = /^[-*+]\s+(.*)$/
 var RE_OL    = /^\d+[.)]\s+(.*)$/
 
+var RE_PIPE  = /\|/
+// One cell of a table's delimiter row: dashes, optionally colon-aligned at either end.
+var RE_DELIM_CELL = /^:?-+:?$/
+
 function isBlank(s) { return /^\s*$/.test(s) }
 
 function finalizeTool(b) {
@@ -18,7 +22,7 @@ function finalizeTool(b) {
 }
 
 // markdown text -> block array
-// { type: p | h1..h3 | ul | ol | quote | code | tool | hr }
+// { type: p | h1..h3 | ul | ol | quote | table | code | tool | hr }
 function parse(text) {
     var src = (text === undefined || text === null) ? "" : String(text)
     var lines = src.split("\n")
@@ -91,12 +95,112 @@ function parse(text) {
             continue
         }
 
+        // A table: this line is the header row and the next one is the delimiter row. Checked before the
+        // paragraph branch, or the header and every row below it fold into one paragraph of pipes.
+        if (RE_PIPE.test(t) && isTableDelimiter(lines[i + 1])) {
+            var head = tableCells(t)
+            var align = tableAlign(tableCells(lines[i + 1]))
+            // The two rows have to agree on the column count; otherwise this was never a table (a
+            // paragraph that happens to contain a pipe, followed by a rule).
+            if (align.length === head.length) {
+                flush()
+                var rows = []
+                var r = i + 2
+                for (; r < lines.length; r++) {
+                    var rowText = lines[r].trim()
+                    if (rowText === "" || !RE_PIPE.test(rowText))
+                        break
+                    var cells = tableCells(rowText)
+                    // The delimiter row decides the width: a short row loses nothing by being padded,
+                    // and a long one must not push a column the header never declared.
+                    while (cells.length < head.length)
+                        cells.push("")
+                    rows.push(cells.slice(0, head.length))
+                }
+                blocks.push({ type: "table", header: head, align: align, rows: rows })
+                i = r - 1
+                continue
+            }
+        }
+
         if (cur && cur.type === "p") cur.text += (cur.text.length > 0 ? "\n" : "") + t
         else { flush(); cur = { type: "p", text: t } }
     }
 
     flush()
     return blocks
+}
+
+// ---------- tables ----------
+//
+// A GitHub pipe table. Not "prose" in the Markdown sense, but text the user reads and copies, so it is
+// rendered inside the same TextEdit as the paragraphs around it (see PROSE): Qt's selection then runs
+// through a table instead of stopping at its edge.
+//
+// Qt's rich text draws a grid only from the *table's* border plus border-collapse. A border on a cell
+// paints nothing on its own, and there is no per-side border at all — measured on Qt 6, so: every line
+// is the same weight and colour (no rule under the header only), and a cell background is inset by
+// cellpadding, which rules out a full-bleed header band. The header is told apart by weight alone. Do
+// not "improve" that without a screenshot to check it.
+
+// Cells of one pipe-table row.
+//
+// Not a plain split("|"): `\|` is a literal pipe inside a cell (a shell pipeline in a table is exactly
+// where that shows up), and the leading / trailing pipe is the row's own fence, not an empty cell.
+function tableCells(line) {
+    var s = String(line === undefined || line === null ? "" : line).trim()
+    if (s.charAt(0) === "|")
+        s = s.slice(1)
+    if (s.length > 0 && s.charAt(s.length - 1) === "|" && s.charAt(s.length - 2) !== "\\")
+        s = s.slice(0, -1)
+
+    var cells = []
+    var cur = ""
+    for (var i = 0; i < s.length; i++) {
+        var ch = s.charAt(i)
+        var next = s.charAt(i + 1)
+        if (ch === "\\" && (next === "|" || next === "\\")) {
+            cur += next
+            i++
+            continue
+        }
+        if (ch === "|") {
+            cells.push(cur.trim())
+            cur = ""
+            continue
+        }
+        cur += ch
+    }
+    cells.push(cur.trim())
+    return cells
+}
+
+// The delimiter row decides where each column's text sits: `:--` left, `--:` right, `:-:` centre.
+function tableAlign(cells) {
+    var out = []
+    for (var i = 0; i < cells.length; i++) {
+        var c = cells[i]
+        var head = c.charAt(0) === ":"
+        var tail = c.charAt(c.length - 1) === ":"
+        out.push(head && tail ? "center" : tail ? "right" : "left")
+    }
+    return out
+}
+
+// Is this the `| --- | :--: |` line under a header row?
+//
+// The pipe is required, not just tolerated: a single-column table without one is indistinguishable
+// from a setext heading (`a` over `---`), and guessing wrong costs a line of the answer.
+function isTableDelimiter(line) {
+    var t = String(line === undefined || line === null ? "" : line).trim()
+    if (t.indexOf("-") < 0 || !RE_PIPE.test(t))
+        return false
+    var cells = tableCells(t)
+    for (var i = 0; i < cells.length; i++) {
+        if (!RE_DELIM_CELL.test(cells[i]))
+            return false
+    }
+    return true
 }
 
 // ---------- prose runs ----------
@@ -109,7 +213,7 @@ function parse(text) {
 // Rendered as HTML rather than Markdown because MarkdownText takes Qt's fixed heading scale (2x / 1.5x
 // / 1.1875x of the body), which is nothing like the Theme's 20 / 16 / 15. RichText lets every size,
 // color and margin come from Theme instead of from Qt's defaults.
-var PROSE = { p: true, h1: true, h2: true, h3: true, ul: true, ol: true, quote: true }
+var PROSE = { p: true, h1: true, h2: true, h3: true, ul: true, ol: true, quote: true, table: true }
 
 function isProse(b) { return !!b && PROSE[b.type] === true }
 
@@ -217,9 +321,49 @@ function blockHtml(b, st, first) {
             + "\">" + lis.join("") + "</" + tag + ">"
     }
 
+    if (t === "table")
+        return tableHtml(b, st, first)
+
     return "<p style=\"" + style(
         "margin-top:" + (first ? 0 : st.gap) + "px;font-size:" + st.base + "px;color:" + st.text) + "\">"
         + inlineHtml(String(b.text || "").split("\n").join(" "), st) + "</p>"
+}
+
+// One table as HTML.
+//
+// Every cell states its alignment, because the delimiter row is where `---:` and `:-:` live and Qt's
+// own default would put every column on the left edge. No width is set either — Qt sizes the columns
+// from their contents and wraps inside a wide cell, which is what a Markdown renderer is expected to
+// do; a table stretched to the full column would put two words and a lot of nothing in each cell.
+function tableHtml(b, st, first) {
+    var head = b.header || []
+    var rows = b.rows || []
+    var align = b.align || []
+
+    function edge(i) { return align[i] || "left" }
+
+    var cell = "font-family:" + st.font + ";font-size:" + st.base + "px;color:" + st.text + ";"
+    var html = '<table cellspacing="0" cellpadding="' + st.cellPad + '" style="margin:0;'
+        + (first ? "" : "margin-top:" + st.gap + "px;")
+        + "border:1px solid " + st.tableLine + ";border-collapse:collapse;\">"
+
+    var tr = "<tr>"
+    for (var c = 0; c < head.length; c++)
+        tr += "<th align=\"" + edge(c) + "\" style=\"" + cell + "font-weight:600;\">"
+            + inlineHtml(head[c], st) + "</th>"
+    html += tr + "</tr>"
+
+    for (var r = 0; r < rows.length; r++) {
+        tr = "<tr>"
+        var row = rows[r] || []
+        for (var i = 0; i < head.length; i++) {
+            var v = row[i] === undefined ? "" : row[i]
+            tr += "<td align=\"" + edge(i) + "\" style=\"" + cell + "\">" + inlineHtml(v, st) + "</td>"
+        }
+        html += tr + "</tr>"
+    }
+
+    return html + "</table>"
 }
 
 // A prose run (or a lone prose block) as RichText for one TextEdit.
@@ -234,7 +378,7 @@ function toHtml(blk, st) {
 }
 
 // The Markdown a prose run came from, for "copy this block".
-// Lists and quotes carry no .text of their own, so they are rebuilt from their parts.
+// Lists, quotes and tables carry no .text of their own, so they are rebuilt from their parts.
 function proseCopy(blk) {
     if (!blk)
         return ""
@@ -243,7 +387,7 @@ function proseCopy(blk) {
     for (var i = 0; i < items.length; i++) {
         var b = items[i]
         if (!b) continue
-        if (b.type === "ul" || b.type === "ol" || b.type === "quote")
+        if (b.type === "ul" || b.type === "ol" || b.type === "quote" || b.type === "table")
             out.push(toMarkdown(b))
         else
             out.push(String(b.text || ""))
@@ -263,5 +407,28 @@ function toMarkdown(b) {
     if (b.type === "quote") {
         return b.text.split("\n").map(function (l) { return "> " + l }).join("\n")
     }
+    if (b.type === "table") {
+        // The delimiter row keeps each column's alignment, so a copy pastes back the table it came
+        // from rather than a left-aligned one.
+        var align = b.align || []
+        var marks = []
+        for (var i = 0; i < (b.header || []).length; i++) {
+            var a = align[i] || "left"
+            marks.push(a === "center" ? ":---:" : a === "right" ? "---:" : "---")
+        }
+        var lines = [tableRow(b.header), tableRow(marks)]
+        for (var r = 0; r < (b.rows || []).length; r++)
+            lines.push(tableRow(b.rows[r]))
+        return lines.join("\n")
+    }
     return b.text ? b.text : ""
+}
+
+// A table row back to Markdown, one cell per column, pipes escaped.
+function tableRow(cells) {
+    var out = []
+    var list = cells || []
+    for (var i = 0; i < list.length; i++)
+        out.push(" " + String(list[i] === undefined ? "" : list[i]).replace(/\|/g, "\\|") + " ")
+    return "|" + out.join("|") + "|"
 }

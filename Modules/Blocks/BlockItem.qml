@@ -22,7 +22,7 @@ Item {
             if (t === "code") return codeComp
             if (t === "tool") return toolComp
             if (t === "hr") return ruleComp
-            // "prose" is a run of paragraphs/headings/lists/quotes sharing one TextEdit; a lone
+            // "prose" is a run of paragraphs/headings/lists/quotes/tables sharing one TextEdit; a lone
             // prose block (the streaming fallback) lands here too.
             return textComp
         }

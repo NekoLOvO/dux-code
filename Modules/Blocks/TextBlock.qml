@@ -4,7 +4,7 @@ import qs.Services
 import qs.DCommon.Common
 import "../../Common/Blockizer.js" as Blockizer
 
-// A run of prose — paragraphs, headings, lists and quotes — in ONE TextEdit.
+// A run of prose — paragraphs, headings, lists, quotes and tables — in ONE TextEdit.
 //
 // One TextEdit per block (what this used to be) meant a selection could never leave the block it
 // started in, and copying an answer meant copying it a paragraph at a time. Grouping the run fixes
@@ -38,7 +38,12 @@ TextEdit {
         "gap": Theme.spacingM,
         // A heading used to add spacingS of top padding on top of the column gap.
         "headGap": Theme.spacingS,
-        "quoteIndent": Theme.spacingM
+        "quoteIndent": Theme.spacingM,
+        // Table chrome. The grid is the same hairline a code card's border uses, and cellpadding is
+        // the only padding Qt's table layout offers (a cell's background is inset by it, so the header
+        // row is drawn by weight instead).
+        "tableLine": Theme.outlineVariant,
+        "cellPad": Theme.spacingS
     })
 
     width: parent ? parent.width : 0
