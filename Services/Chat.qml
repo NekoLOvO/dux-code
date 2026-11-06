@@ -126,6 +126,9 @@ QtObject {
     // results into one row and drops assistant messages that only hold toolCalls, so the two
     // orderings differ. After loading, scan once to find the on-screen row.
     property string jumpTarget: ""
+    // A message id a search landed on that lives inside the folded prefix. The card opens its archive
+    // and scrolls to it, then clears this.
+    property string archiveJump: ""
     signal jumpRequested(int index)
 
     function jumpTo(sessionId, messageId) {
@@ -143,6 +146,8 @@ QtObject {
             return;
         const want = jumpTarget;
         jumpTarget = "";
+        // A previous jump may have left the card pointed at a row; this one decides afresh.
+        archiveJump = "";
         for (let i = 0; i < messages.count; i++) {
             const ids = messages.get(i).msgIds || "";
             // Match with surrounding commas so ids that are substrings of each other do not
@@ -152,6 +157,14 @@ QtObject {
                 return;
             }
         }
+        // Not in the transcript: the compacted prefix is folded away. Everything the search covers is
+        // still here, so open the archive and point at the row.
+        if (_archivedMessages.length > 0) {
+            archiveJump = want;
+            return;
+        }
+        // Nothing on screen holds it any more (edited or truncated after the search ran).
+        ToastService.info(I18n.tr("That message is no longer in this conversation.", "toast when a search hit cannot be found in the transcript"));
     }
 
     readonly property bool busy: activeRunId !== ""
@@ -255,11 +268,49 @@ QtObject {
             ? { "upToId": c.upToId, "summary": c.summary || "", "count": c.count }
             : null
         _locateCompaction()
+        _foldAboveSeam()
+    }
+
+    // Rows folded into the archive, waiting for the archive to be built before they can join it.
+    property var _queuedFolded: []
+
+    // Move every row above the seam into the archive.
+    //
+    // At load time the rows are already folded (loadSession builds from the cut), so this does
+    // nothing. It matters mid-session: a compaction fires at the start of a turn, and the rows it just
+    // covered are still in the model. One remove() call rather than a loop — removing a long prefix row
+    // by row is a layout pass each, which is the freeze this feature exists to avoid.
+    function _foldAboveSeam() {
+        if (!compaction || compactionRow <= 0)
+            return
+        var k = compactionRow
+        if (_archivedBuilt) {
+            for (var i = 0; i < k; i++)
+                archived.append(messages.get(i))
+        } else {
+            // buildArchive has not run, so its rows must land first or the order would be wrong.
+            for (var j = 0; j < k; j++)
+                _queuedFolded.push(messages.get(j))
+        }
+        // Indices that point into the model move up with the rows.
+        if (liveIndex >= 0)
+            liveIndex -= k
+        if (pendingUserRow >= 0)
+            pendingUserRow -= k
+        messages.remove(0, k)
+        compactionRow = 0
     }
 
     // The cut point is a message id; the row is found by id because rows merge and drop messages.
     function _locateCompaction() {
         var row = -1
+        // Folded: the transcript starts at the cut, so the seam is the first row whether or not that
+        // row still names the id. Searching would return -1 if the cut message were ever dropped from
+        // the rows, and the card is the only way back to the archive — losing it would lose them.
+        if (compaction && (archived.count > 0 || _archivedMessages.length > 0)) {
+            compactionRow = 0
+            return
+        }
         if (compaction) {
             for (var i = 0; i < messages.count; i++) {
                 if (String(messages.get(i).msgIds || "").split(",").indexOf(compaction.upToId) !== -1) {
@@ -346,89 +397,166 @@ QtObject {
             const tu = res.session.totalUsage
             sessionTokens = tu ? (tu.input || 0) + (tu.output || 0) : 0
             var list = res.session.messages || []
-            // Older tool messages carry no toolArgs; recover them from the preceding
-            // assistant message's toolCalls.
-            var callArgs = {}
-            for (var k = 0; k < list.length; k++) {
-                var tcs = list[k].toolCalls || []
-                for (var t = 0; t < tcs.length; t++) {
-                    if (tcs[t] && tcs[t].id)
-                        callArgs[tcs[t].id] = (tcs[t].function && tcs[t].function.arguments) || ""
-                }
-            }
+            var callArgs = _callArgsOf(list)
+            // Fold the part the summary stands in for: those messages are what the model no longer
+            // reads, and on a long session they are most of the rows. They stay reachable through the
+            // card's second tab, which builds them only when someone asks.
+            var cut = _cutIndex(list, savedCompaction)
+            _archivedMessages = cut > 0 ? list.slice(0, cut) : []
+            _archivedCallArgs = callArgs
+            _archivedBuilt = false
+            _queuedFolded = []
+            archived.clear()
             var rows = []
-            var i = 0
-            while (i < list.length) {
-                var m = list[i]
-                var role = m.role || "assistant"
-                // Assistant messages with only tool_calls are hidden: the tool card and the
-                // final answer carry the information.
-                if (role === "assistant" && (m.text || "") === "" && (m.toolCalls || []).length > 0) {
-                    i++
-                    continue
-                }
-                // Consecutive tool results merge into one row (models often call several at once).
-                if (role === "tool") {
-                    var group = []
-                    while (i < list.length && (list[i].role || "assistant") === "tool") {
-                        group.push({
-                            "callId": list[i].toolCallId || "",
-                            "msgId": list[i].id || "",
-                            "name": list[i].name || "",
-                            "args": list[i].toolArgs || callArgs[list[i].toolCallId] || "",
-                            "output": list[i].text || "",
-                            "running": false
-                        })
-                        i++
-                    }
-                    rows.push({
-                        // This row may merge several tool results; record them all so a search
-                        // hit maps back to it.
-                        msgIds: group.map(g => g.msgId).join(","),
-                        isUser: false,
-                        kind: "tool",
-                        toolName: "",
-                        toolCallId: "",
-                        toolsJson: JSON.stringify(group),
-                        status: stDone,
-                        rawText: "",
-                        runId: "",
-                        elapsedMs: 0,
-                        attachments: "",
-                        reasoning: "",
-                        usageIn: 0,
-                        usageOut: 0,
-                        truncated: false
-                    })
-                    continue
-                }
-                rows.push({
-                    // Jumps map by messageId, not index: rows merge tool results and drop empty
-                    // assistant messages, so the two orders differ.
-                    msgIds: m.id || "",
-                    isUser: role === "user",
-                    kind: "text",
-                    toolName: "",
-                    toolCallId: "",
-                    toolsJson: "[]",
-                    status: stDone,
-                    rawText: m.text || "",
-                    runId: "",
-                    elapsedMs: m.elapsedMs || 0,
-                    attachments: (m.attachments || []).join("\n"),
-                    reasoning: m.reasoning || "",
-                    // lastUsage is the raw last-request report; older sessions only have the
-                    // cumulative usage, which beats showing 0.
-                    usageIn: ((m.lastUsage || m.usage) && (m.lastUsage || m.usage).input) || 0,
-                    usageOut: ((m.lastUsage || m.usage) && (m.lastUsage || m.usage).output) || 0,
-                    truncated: m.truncated === true
-                })
-                i++
-            }
+            if (cut > 0)
+                rows = _buildRows(list, cut, list.length, callArgs)
+            else
+                rows = _buildRows(list, 0, list.length, callArgs)
             // The rows are built; putting them into the model is the part that has to be spread out.
             _pendingCompaction = savedCompaction
             _insertRows(rows, 0, _loadToken, done)
         })
+    }
+
+    // --- fold: the compacted prefix, and the archive behind the card ---
+
+    // The store messages the summary stands in for, kept so the card's second tab can build them —
+    // only when someone opens it. Empty when no compaction covers this session.
+    property var _archivedMessages: []
+    property var _archivedCallArgs: ({})
+    property bool _archivedBuilt: false
+
+    // The archive as the card renders it. A ListModel rather than a JS array because it arrives in
+    // chunks (see buildArchive) and a plain array would make every chunk a full re-render.
+    property ListModel archived: ListModel {}
+
+    readonly property int archiveCount: _archivedMessages.length
+
+    // Index in `list` of the first message still sent verbatim, or -1 when the record names a message
+    // that is not there (an edited transcript, an older file).
+    function _cutIndex(list, record) {
+        if (!record || !record.upToId)
+            return -1
+        for (var i = 0; i < list.length; i++) {
+            if (list[i] && list[i].id === record.upToId)
+                return i
+        }
+        return -1
+    }
+
+    // Tool arguments for older files, where the tool message does not carry its own copy.
+    function _callArgsOf(list) {
+        var callArgs = {}
+        for (var k = 0; k < list.length; k++) {
+            var tcs = list[k].toolCalls || []
+            for (var t = 0; t < tcs.length; t++) {
+                if (tcs[t] && tcs[t].id)
+                    callArgs[tcs[t].id] = (tcs[t].function && tcs[t].function.arguments) || ""
+            }
+        }
+        return callArgs
+    }
+
+    // Transcript rows for store messages [from, to).
+    //
+    // One builder for the loaded window and for the archive: two would drift, and the archive is
+    // supposed to be what the transcript would have shown.
+    function _buildRows(list, from, to, callArgs) {
+        var rows = []
+        var i = from
+        while (i < to) {
+            var m = list[i]
+            var role = m.role || "assistant"
+            // Assistant messages with only tool_calls are hidden: the tool card and the final answer
+            // carry the information.
+            if (role === "assistant" && (m.text || "") === "" && (m.toolCalls || []).length > 0) {
+                i++
+                continue
+            }
+            // Consecutive tool results merge into one row (models often call several at once).
+            if (role === "tool") {
+                var group = []
+                while (i < to && (list[i].role || "assistant") === "tool") {
+                    group.push({
+                        "callId": list[i].toolCallId || "",
+                        "msgId": list[i].id || "",
+                        "name": list[i].name || "",
+                        "args": list[i].toolArgs || callArgs[list[i].toolCallId] || "",
+                        "output": list[i].text || "",
+                        "running": false
+                    })
+                    i++
+                }
+                rows.push({
+                    // This row may merge several tool results; record them all so a search hit maps
+                    // back to it.
+                    msgIds: group.map(g => g.msgId).join(","),
+                    isUser: false,
+                    kind: "tool",
+                    toolName: "",
+                    toolCallId: "",
+                    toolsJson: JSON.stringify(group),
+                    status: stDone,
+                    rawText: "",
+                    runId: "",
+                    elapsedMs: 0,
+                    attachments: "",
+                    reasoning: "",
+                    usageIn: 0,
+                    usageOut: 0,
+                    truncated: false
+                })
+                continue
+            }
+            rows.push({
+                // Jumps map by messageId, not index: rows merge tool results and drop empty
+                // assistant messages, so the two orders differ.
+                msgIds: m.id || "",
+                isUser: role === "user",
+                kind: "text",
+                toolName: "",
+                toolCallId: "",
+                toolsJson: "[]",
+                status: stDone,
+                rawText: m.text || "",
+                runId: "",
+                elapsedMs: m.elapsedMs || 0,
+                attachments: (m.attachments || []).join("\n"),
+                reasoning: m.reasoning || "",
+                // lastUsage is the raw last-request report; older sessions only have the cumulative
+                // usage, which beats showing 0.
+                usageIn: ((m.lastUsage || m.usage) && (m.lastUsage || m.usage).input) || 0,
+                usageOut: ((m.lastUsage || m.usage) && (m.lastUsage || m.usage).output) || 0,
+                truncated: m.truncated === true
+            })
+            i++
+        }
+        return rows
+    }
+
+    // Build the archive a chunk at a time, the way a load does: a long prefix is hundreds of rows, and
+    // putting them all into the model in one turn of the event loop is what freezes the window.
+    function buildArchive() {
+        if (_archivedBuilt || _archivedMessages.length === 0)
+            return
+        _archivedBuilt = true
+        var rows = _buildRows(_archivedMessages, 0, _archivedMessages.length, _archivedCallArgs)
+        var at = 0
+        function chunk() {
+            var end = Math.min(at + _loadChunk, rows.length)
+            for (var i = at; i < end; i++)
+                archived.append(rows[i])
+            at = end
+            if (at < rows.length) {
+                Qt.callLater(chunk)
+                return
+            }
+            // Rows folded while the build was running are older than nothing and newer than the rest.
+            for (var q = 0; q < _queuedFolded.length; q++)
+                archived.append(_queuedFolded[q])
+            _queuedFolded = []
+        }
+        chunk()
     }
 
     // Appends rows a chunk at a time, then finishes the load.

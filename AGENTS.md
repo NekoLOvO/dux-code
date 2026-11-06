@@ -137,7 +137,7 @@ fixed delay — a load issued before the socket is up fails silently and reports
   every step and again on `run.finished`, and a listener that summed deltas would double it. It is not
   "how full the context is" (that is `lastUsage.input`, one request) and it is not an estimate.
   Sessions written before the field existed have it recovered from their messages on load.
-- **A reply is several TextEdits, and only one of them may show a selection.** Prose is grouped into
+- **A reply is several TextEdits, and only one may show a selection.** Prose is grouped into
   one TextEdit per stretch (a selection inside a stretch is Qt's own and crosses paragraphs,
   headings, lists and tables), and a code card is another. Qt scopes selection to the editor it
   happens in, so without help two paragraphs would both stay lit — reading as one selection when it
@@ -245,15 +245,14 @@ fixed delay — a load issued before the socket is up fails silently and reports
   `Modules/MessageList.qml` must not `stickToEnd` while `Chat.loading` (a layout pass and a fresh
   delegate per row), and it scrolls twice on `rowsLoaded` because the first jump reveals rows never
   measured. Anything writing to `messages` mid-load must call `Chat._finishRows()` first (see
-  `Chat.send`). Still open: the total is seconds on a very long session, so the answer is paging — a
-  feature, not a tweak (scroll anchor, search jumps into unloaded rows, edit/regenerate by message id,
-  a compaction seam outside the window).
-- **A model reset is not the accelerator it looks like.** Inserting 1,121 rows into a detached model
-  then assigning it measured 119ms; appending them with no view attached, 10ms; both gave the same
-  `contentHeight` once the view was pointed at them. The cost was never in the model — it is the
-  view's layout-and-create-a-delegate per inserted row, which is why chunked insertion plus a
-  suppressed follow is the fix. An earlier note here claimed a reset was 40x faster and produced a
-  different height; that compared two different row sets. Measure both paths on the same array first.
+  `Chat.send`). Still open for the *unfolded* part: the total is seconds on a very long session, so the
+  rest of the answer is paging — scroll anchor, search jumps into unloaded rows, edit/regenerate by
+  message id. Folding the compacted prefix (above) is the first slice of it.
+- **A model reset is not the accelerator it looks like.** Inserting 1,121 rows into a detached model then
+  assigning it measured 119ms; appending them with no view attached, 10ms; both gave the same
+  `contentHeight` once the view was pointed at them. The cost is the view's layout-and-create-a-delegate
+  per inserted row, which is why chunked insertion plus a suppressed follow is the fix. An earlier note
+  claimed a reset was 40x faster; that compared two different row sets.
 - **`0` is a real value** for `maxOutputTokens`, `maxToolSteps` and `compactAt` — it means "off".
   Do not reintroduce `<= 0 → default`; the migration pins v2 zeros instead. The output cap's default
   is 0: a cap set too low truncates replies where the user cannot see why.
@@ -290,16 +289,19 @@ fixed delay — a load issued before the socket is up fails silently and reports
   can read never fires in time, and the overflow that follows is a 400 that is not retried. The daemon
   publishes the lowered value as `effectiveCompactAt` so the settings row can say what will really
   happen instead of repeating the rule in QML.
-- **A compaction is a seam in the transcript, not a chip in the composer.** The stored transcript keeps
-  every message, so the UI shows where the summary takes over: `context.compacted` carries `upToId`,
-  `count` and `summary`, `Chat.compactionRow` finds the row by message id (rows merge tool results and
-  drop empty assistant messages, so an index would not survive), and `MessageDelegate` draws
-  `CompactionDivider` above that row. The seam lives inside the row rather than as a row of its own, so
-  edit/regenerate addressing, search jumps and the model's indices never move when a summary appears.
-  `count` is how many messages the *current* summary stands in for — one summary is in play at a time,
-  and a later compaction recomputes the cut against the whole history — not a sum over every compaction.
-  `Store.dropStaleCompaction` forgets the record when editing or regenerating removes its cut point;
-  a record whose boundary is gone is a summary and a count describing nothing.
+- **The compacted prefix is folded, not rendered.** It is what the model no longer reads and most of
+  the rows on a long session: measured on a 460-message session, folding took the model from 460
+  rows to 60. `Chat.loadSession` builds rows from the cut, and the card's second tab builds the rest
+  on demand in `_loadChunk` chunks (400 archived rows: ~600 ms, offscreen). The card is not a row of
+  its own — it rides on the first row still sent verbatim, so edit/regenerate addressing and the
+  model's indices did not move; `_locateCompaction` returns 0 when folded even if that row no longer
+  names `upToId`, because the card is the only route back to the archive. `_foldAboveSeam` handles a
+  compaction that fires mid-session (one `messages.remove(0, k)`, never a per-row loop) and moves
+  `liveIndex`/`pendingUserRow` with it. A search hit inside the fold sets `Chat.archiveJump`: the
+  card opens its archive and scrolls there instead of saying "not found". `count` is how many
+  messages the *current* summary stands in for — one summary is in play at a time, and a later
+  compaction recomputes the cut against the whole history — not a sum over every compaction.
+  `Store.dropStaleCompaction` forgets the record when an edit or regenerate removes its cut point.
 - **Compaction measures the request, not the transcript.** `maybeCompact` compares
   `sentCost(hist, from, record)` — the summary message plus the messages after the cut — against the
   threshold. Measuring `hist` instead looks equivalent and is not: the stored transcript never shrinks,

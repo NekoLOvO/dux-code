@@ -315,6 +315,9 @@ Item {
             height: visible ? implicitHeight : 0
             count: root.compactionCount
             summary: root.compactionSummary
+            // The folded prefix. Built only when the card's second tab is opened.
+            archive: Chat.archived
+            revealId: Chat.archiveJump
         }
 
         // ---------- assistant ----------

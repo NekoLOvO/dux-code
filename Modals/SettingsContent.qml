@@ -208,7 +208,7 @@ Item {
     // "this number cannot take effect"; the comparison comes from the daemon so there is one rule, not
     // two copies of it.
     readonly property string compactDescription: {
-        const base = I18n.tr("Older history becomes a summary past this size. Your transcript keeps everything.", "context compaction threshold dropdown description");
+        const base = I18n.tr("Older history becomes a summary past this size. The messages it replaces stay in the transcript, folded under the summary.", "context compaction threshold dropdown description");
         if (Backend.compactAt <= 0 || Backend.effectiveCompactAt <= 0 || Backend.effectiveCompactAt >= Backend.compactAt)
             return base;
         return base + " " + I18n.tr("This model cannot read that much, so compaction actually happens at %1.", "context compaction threshold dropdown description, threshold lowered to fit the model's window").arg(root.sizeLabel(Backend.effectiveCompactAt));

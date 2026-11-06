@@ -26,6 +26,9 @@
   "%1 selected": {
     "%1 selected": "已選 %1 個"
   },
+  "%1 tool calls": {
+    "%1 tool calls": "%1 個工具呼叫"
+  },
   "%1 · failed": {
     "%1 · failed": "%1 · 失敗"
   },
@@ -434,9 +437,6 @@
   "Every week": {
     "Every week": "每週"
   },
-  "Everything above this line stays in your transcript but is no longer sent to the model.": {
-    "Everything above this line stays in your transcript but is no longer sent to the model.": "這行以上的訊息仍保留在對話紀錄裡，但不會再送給模型。"
-  },
   "Expand editor": {
     "Expand editor": "放大編輯區"
   },
@@ -785,8 +785,8 @@
   "Offline": {
     "Offline": "離線"
   },
-  "Older history becomes a summary past this size. Your transcript keeps everything.": {
-    "Older history becomes a summary past this size. Your transcript keeps everything.": "歷史超過這個量時，較早的部分會換成摘要；對話紀錄不會少任何一則。"
+  "Older history becomes a summary past this size. The messages it replaces stay in the transcript, folded under the summary.": {
+    "Older history becomes a summary past this size. The messages it replaces stay in the transcript, folded under the summary.": "超過這個大小之後，較早的對話會變成摘要。被取代的訊息仍留在對話記錄裡，收在摘要下方。"
   },
   "On": {
     "On": "開"
@@ -802,6 +802,9 @@
   },
   "Or type your own answer": {
     "Or type your own answer": "或自己輸入回答"
+  },
+  "Original conversation": {
+    "Original conversation": "原始對話"
   },
   "Outline": {
     "Outline": "外框"
@@ -1121,6 +1124,9 @@
   "Stopped": {
     "Stopped": "未執行"
   },
+  "Summary": {
+    "Summary": "摘要"
+  },
   "Summary of %1 earlier messages": {
     "Summary of %1 earlier messages": "先前 %1 則訊息的摘要"
   },
@@ -1163,11 +1169,20 @@
   "Text color": {
     "Text color": "文字色"
   },
+  "That message is no longer in this conversation.": {
+    "That message is no longer in this conversation.": "那則訊息已經不在這段對話裡了。"
+  },
   "That message is still being saved. Try again in a moment.": {
     "That message is still being saved. Try again in a moment.": "該訊息還在儲存中，請稍後再試。"
   },
   "The agent loses web search if this was the only backend.": {
     "The agent loses web search if this was the only backend.": "如果這是唯一的後端，代理就沒有網路搜尋了。"
+  },
+  "The model reads this summary instead of the messages it replaced. They are still here, under Original conversation.": {
+    "The model reads this summary instead of the messages it replaced. They are still here, under Original conversation.": "模型讀的是這份摘要，而不是它取代的那些訊息。那些訊息還在，在「原始對話」裡。"
+  },
+  "The original messages are not in this session file any more.": {
+    "The original messages are not in this session file any more.": "這個會話檔裡已經沒有原始訊息了。"
   },
   "The provider searches on its own side, so the local web_search tool is not offered. This is billed per search.": {
     "The provider searches on its own side, so the local web_search tool is not offered. This is billed per search.": "由服務商自己搜尋，所以不會提供本機的 web_search 工具。這會按次計費。"

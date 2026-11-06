@@ -35,6 +35,11 @@
     "context": "permission dialog queued count | system notification text"
   },
   {
+    "term": "%1 tool calls",
+    "translation": "",
+    "context": "compaction archive: how many tool calls sat in one archived row"
+  },
+  {
     "term": "%1 · failed",
     "translation": "",
     "context": "system notification text"
@@ -207,7 +212,7 @@
   {
     "term": "Assistant",
     "translation": "",
-    "context": "search result: the message is from the model"
+    "context": "compaction archive: this archived message is from the model | search result: the message is from the model"
   },
   {
     "term": "Attach files",
@@ -638,11 +643,6 @@
     "term": "Every week",
     "translation": "",
     "context": "task schedule kind: weekly"
-  },
-  {
-    "term": "Everything above this line stays in your transcript but is no longer sent to the model.",
-    "translation": "",
-    "context": "compaction seam: explanation shown under the summary"
   },
   {
     "term": "Expand editor",
@@ -1125,7 +1125,7 @@
     "context": "about page daemon status value"
   },
   {
-    "term": "Older history becomes a summary past this size. Your transcript keeps everything.",
+    "term": "Older history becomes a summary past this size. The messages it replaces stay in the transcript, folded under the summary.",
     "translation": "",
     "context": "context compaction threshold dropdown description"
   },
@@ -1153,6 +1153,11 @@
     "term": "Or type your own answer",
     "translation": "",
     "context": "question dialog free text placeholder"
+  },
+  {
+    "term": "Original conversation",
+    "translation": "",
+    "context": "compaction card tab: the messages the summary replaced"
   },
   {
     "term": "Outline",
@@ -1615,6 +1620,11 @@
     "context": "mcp row subtitle when the server is not running"
   },
   {
+    "term": "Summary",
+    "translation": "",
+    "context": "compaction card tab: the text the model now works from"
+  },
+  {
     "term": "Summary of %1 earlier messages",
     "translation": "",
     "context": "compaction seam in the transcript: a summary replaced this many messages"
@@ -1685,6 +1695,11 @@
     "context": "focus ring color option"
   },
   {
+    "term": "That message is no longer in this conversation.",
+    "translation": "",
+    "context": "toast when a search hit cannot be found in the transcript"
+  },
+  {
     "term": "That message is still being saved. Try again in a moment.",
     "translation": "",
     "context": "toast when a message has no id from the daemon yet"
@@ -1693,6 +1708,16 @@
     "term": "The agent loses web search if this was the only backend.",
     "translation": "",
     "context": "remove search backend confirmation message"
+  },
+  {
+    "term": "The model reads this summary instead of the messages it replaced. They are still here, under Original conversation.",
+    "translation": "",
+    "context": "compaction card: explanation under the summary tab"
+  },
+  {
+    "term": "The original messages are not in this session file any more.",
+    "translation": "",
+    "context": "compaction archive: the cut point was found but the messages behind it are gone"
   },
   {
     "term": "The provider searches on its own side, so the local web_search tool is not offered. This is billed per search.",
@@ -1967,7 +1992,7 @@
   {
     "term": "You",
     "translation": "",
-    "context": "search result: the message is from the user"
+    "context": "compaction archive: this archived message is from the user | search result: the message is from the user"
   },
   {
     "term": "Zoom",
