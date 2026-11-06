@@ -182,11 +182,9 @@ fixed delay — a load issued before the socket is up fails silently and reports
 - **A Theme token that does not exist fails at run time, silently.** `check-upstream.sh` compares the
   Theme *contract*; it never asked whether a name in our own QML exists, so an invented
   `Theme.secondaryContainerText` passed every gate and arrived as `Unable to assign [undefined] to
-  QColor`. `tools/check-theme-tokens.py` (in `make check`) resolves every `Theme.x` against
-  `Common/Theme.qml`; it found two on its first run.
+  QColor`. `tools/check-theme-tokens.py` (in `make check`) resolves every `Theme.x`; it found two.
 - **A row read from a ListModel copies nothing when appended to another.** `archived.append(messages.get(i))`
-  gave rows with no `rawText` — `get()` returns a model element, not a value. Copy the roles into a
-  plain object (`Chat._rowCopy`) wherever a row moves between models.
+  gave rows with no `rawText`: `get()` returns an element, not a value. Copy roles (`Chat._rowCopy`).
 - **A model question can be put aside, and only another question brings it back.** The dialog is modal
   and the daemon is blocked inside the tool call until it gets an answer, so "hide" cannot mean
   "dismiss" — that is Skip, and it changes the conversation. `QuestionDialog.minimize()` closes the
@@ -298,7 +296,8 @@ fixed delay — a load issued before the socket is up fails silently and reports
   not move. `_locateCompaction` falls back to row 0 only when the id is not found *and* the prefix is
   folded; checked first it pinned every later compaction to row 0. `_foldAboveSeam` folds a compaction
   that fires mid-session (one `messages.remove(0, k)`) and moves `liveIndex`/`pendingUserRow` with it. A
-  search hit inside the fold sets `Chat.archiveJump`. **A live fold is invisible without help**: the
+  search hit inside the fold sets `Chat.archiveJump`. The archive must render **tool rows**: on a real
+  session 302 of 371 archived rows were calls, and drawing only their count left bare labels. **A live fold is invisible without help**: the
   seam becomes row 0, ~70k px above a view that follows the reply, so the toast ("Folded N earlier
   messages", action → `Chat.seamRevealRequested`) is the only thing that says it happened — and reveal
   it with `scrollToTop`, not `jumpRequested(0)`, which ListView centres to a negative contentY.
