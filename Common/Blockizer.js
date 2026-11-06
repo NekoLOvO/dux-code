@@ -99,7 +99,159 @@ function parse(text) {
     return blocks
 }
 
-// Serialize a block back to Markdown for Qt's MarkdownText.
+// ---------- prose runs ----------
+//
+// Every block used to be its own TextEdit, which meant a selection could never leave one paragraph.
+// The daemon has no say in this: it is a rendering limit of "one document per block". Prose (paragraphs,
+// headings, lists, quotes) is grouped into a single run so one TextEdit holds all of it and Qt's own
+// selection spans the whole thing. Code and tool cards stay separate — they are widgets, not text.
+//
+// Rendered as HTML rather than Markdown because MarkdownText takes Qt's fixed heading scale (2x / 1.5x
+// / 1.1875x of the body), which is nothing like the Theme's 20 / 16 / 15. RichText lets every size,
+// color and margin come from Theme instead of from Qt's defaults.
+var PROSE = { p: true, h1: true, h2: true, h3: true, ul: true, ol: true, quote: true }
+
+function isProse(b) { return !!b && PROSE[b.type] === true }
+
+// Consecutive prose blocks become one { type: "prose", items: [...] }.
+function groupProse(blocks) {
+    var out = []
+    var run = null
+    for (var i = 0; i < blocks.length; i++) {
+        var b = blocks[i]
+        if (isProse(b)) {
+            if (!run) {
+                run = { type: "prose", items: [] }
+                out.push(run)
+            }
+            run.items.push(b)
+        } else {
+            run = null
+            out.push(b)
+        }
+    }
+    return out
+}
+
+function escapeHtml(s) {
+    return String(s === undefined || s === null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+}
+
+// Inline Markdown inside one line of prose.
+//
+// Code spans are lifted out first: `**not bold**` inside backticks has to stay literal, and the
+// placeholder keeps the later passes from touching it. The text is escaped before any of this, so the
+// markers that survive are the ones the author actually typed.
+function inlineHtml(src, st) {
+    var t = escapeHtml(src)
+    var spans = []
+
+    t = t.replace(/`([^`]+)`/g, function (_, code) {
+        spans.push(code)
+        return "\u0000" + (spans.length - 1) + "\u0000"
+    })
+
+    // Links: only the schemes the rest of the app is willing to open. Anything else keeps its label
+    // and loses the link, rather than handing an unknown scheme to xdg-open.
+    t = t.replace(/\[([^\]]*)\]\(([^)\s]+)\)/g, function (whole, label, url) {
+        if (!/^(https?:\/\/|mailto:)/i.test(url))
+            return label
+        return '<a href="' + url + '">' + label + "</a>"
+    })
+
+    t = t.replace(/\*\*([^\s*](?:[^*]*[^\s*])?)\*\*/g, "<b>$1</b>")
+    t = t.replace(/__([^\s_](?:[^_]*[^\s_])?)__/g, "<b>$1</b>")
+    // Emphasis follows CommonMark's flanking rule, loosely: the marker may not sit next to
+    // whitespace on the inside. Without it `2 * 3 = 6` turns half the sentence italic, and prose
+    // about pointers (`*char`, `**kwargs`) is exactly what a coding agent writes.
+    t = t.replace(/(^|[^*\w])\*([^\s*](?:[^*]*[^\s*])?)\*(?=[^*\w]|$)/g, "$1<i>$2</i>")
+    t = t.replace(/(^|[^_\w])_([^\s_](?:[^_]*[^\s_])?)_(?=[^_\w]|$)/g, "$1<i>$2</i>")
+    t = t.replace(/~~([^\s~](?:[^~]*[^\s~])?)~~/g, "<s>$1</s>")
+
+    t = t.replace(/\u0000(\d+)\u0000/g, function (_, i) {
+        return '<span style="font-family:' + st.mono + ";background-color:" + st.codeBg
+            + ";color:" + st.codeFg + ';">' + spans[+i] + "</span>"
+    })
+
+    return t
+}
+
+// One block of a prose run as an HTML paragraph.
+//
+// margin:0 everywhere, then a top margin on everything but the first: Qt gives <p> a ~12px default
+// that would double up with the gap the caller already spaces blocks with.
+function blockHtml(b, st, first) {
+    var t = b.type
+
+    // Every branch builds the same base and only differs in type size, weight and color.
+    function style(extra) {
+        return "margin:0;font-family:" + st.font + ";" + extra
+    }
+
+    if (t === "h1" || t === "h2" || t === "h3") {
+        var size = t === "h1" ? st.h1 : t === "h2" ? st.h2 : st.h3
+        return "<p style=\"" + style(
+            "margin-top:" + (first ? 0 : st.gap + st.headGap) + "px;" +
+            "font-size:" + size + "px;font-weight:600;color:" + st.text) + "\">"
+            + inlineHtml(b.text, st) + "</p>"
+    }
+
+    if (t === "quote") {
+        return "<p style=\"" + style(
+            "margin-top:" + (first ? 0 : st.gap) + "px;margin-left:" + st.quoteIndent + "px;" +
+            "font-size:" + st.base + "px;color:" + st.quote) + "\">"
+            + inlineHtml(String(b.text || "").split("\n").join(" "), st) + "</p>"
+    }
+
+    if (t === "ul" || t === "ol") {
+        var tag = t === "ul" ? "ul" : "ol"
+        var items = b.items || []
+        var lis = []
+        for (var i = 0; i < items.length; i++)
+            lis.push("<li>" + inlineHtml(items[i], st) + "</li>")
+        return "<" + tag + " style=\"" + style(
+            "margin-top:" + (first ? 0 : st.gap) + "px;font-size:" + st.base + "px;color:" + st.text)
+            + "\">" + lis.join("") + "</" + tag + ">"
+    }
+
+    return "<p style=\"" + style(
+        "margin-top:" + (first ? 0 : st.gap) + "px;font-size:" + st.base + "px;color:" + st.text) + "\">"
+        + inlineHtml(String(b.text || "").split("\n").join(" "), st) + "</p>"
+}
+
+// A prose run (or a lone prose block) as RichText for one TextEdit.
+function toHtml(blk, st) {
+    if (!blk)
+        return ""
+    var items = blk.type === "prose" ? (blk.items || []) : [blk]
+    var out = []
+    for (var i = 0; i < items.length; i++)
+        out.push(blockHtml(items[i], st, i === 0))
+    return out.join("")
+}
+
+// The Markdown a prose run came from, for "copy this block".
+// Lists and quotes carry no .text of their own, so they are rebuilt from their parts.
+function proseCopy(blk) {
+    if (!blk)
+        return ""
+    var items = blk.type === "prose" ? (blk.items || []) : [blk]
+    var out = []
+    for (var i = 0; i < items.length; i++) {
+        var b = items[i]
+        if (!b) continue
+        if (b.type === "ul" || b.type === "ol" || b.type === "quote")
+            out.push(toMarkdown(b))
+        else
+            out.push(String(b.text || ""))
+    }
+    return out.join("\n\n")
+}
+
+// Serialize a block back to Markdown.
 function toMarkdown(b) {
     if (!b) return ""
     if (b.type === "ul") {

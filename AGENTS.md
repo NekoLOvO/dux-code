@@ -137,6 +137,16 @@ fixed delay — a load issued before the socket is up fails silently and reports
   every step and again on `run.finished`, and a listener that summed deltas would double it. It is not
   "how full the context is" (that is `lastUsage.input`, one request) and it is not an estimate.
   Sessions written before the field existed have it recovered from their messages on load.
+- **A reply is several TextEdits, and only one of them may show a selection.** Prose is grouped into
+  one TextEdit per stretch (a selection inside a stretch is Qt's own and crosses paragraphs, headings
+  and lists), and a code card is another. Qt scopes selection to the editor it happens in, so without
+  help two paragraphs would both stay lit — reading as one selection when it was two. Every selectable
+  block reports to `Services/Selection.qml`; the newest claim deselects the previous owner.
+  `Selection._clearing` exists because `deselect()` moves that editor's cursor, which fires the very
+  signals that ask to claim, and the block that just lost the selection would take it straight back.
+  Claims key off `selectedText` and `activeFocus`, never `cursorPosition`: a streaming reply rewrites
+  its own text and the cursor moves with it, which would pull the selection away from whatever the
+  user was reading further up the transcript.
 - **A model question can be put aside, and only another question brings it back.** The dialog is modal
   and the daemon is blocked inside the tool call until it gets an answer, so "hide" cannot mean
   "dismiss" — that is what Skip does, and it changes the conversation. `QuestionDialog.minimize()`

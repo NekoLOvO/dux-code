@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Common
+import qs.Services
 import qs.DCommon.Common
 import qs.DCommon.Widgets
 
@@ -131,6 +132,11 @@ Item {
                     renderType: Text.NativeRendering
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeSmall
+
+                    // Same rule as every other selectable block in the transcript.
+                    onSelectedTextChanged: if (selectedText !== "") Selection.claim(body)
+                    onActiveFocusChanged: if (activeFocus) Selection.claim(body)
+                    Component.onDestruction: Selection.release(body)
                 }
             }
 

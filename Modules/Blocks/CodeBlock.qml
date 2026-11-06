@@ -141,6 +141,11 @@ Item {
                 font.pixelSize: root.muted ? Theme.fontSizeSmall : Theme.fontSizeSmall + 1
                 // Rich text consumes HTML wrapped in <pre>; plain text when unchecked.
                 text: root.html !== "" ? root.html : root.displayCode
+
+                // One selection at a time, shared with the prose blocks around this card.
+                onSelectedTextChanged: if (selectedText !== "") Selection.claim(edit)
+                onActiveFocusChanged: if (activeFocus) Selection.claim(edit)
+                Component.onDestruction: Selection.release(edit)
             }
         }
 
