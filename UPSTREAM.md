@@ -9,8 +9,13 @@ reused by changing their vocabulary.
 | Project | Version | What |
 | --- | --- | --- |
 | `duxlabs-dev/dux-calendar` | `a8feac89ec4edf711cb46f632e412dc5cc59df9e` (2026-10-28) | source of the shell: all of `quickshell/` |
-| `duxlabs-dev/dux-qml-common` | submodule, pinned at `a0d6dee` | the component library itself; `DCommon/` is a symlink to `dux-qml-common/DCommon` |
+| `duxlabs-dev/dux-qml-common` | submodule, pinned at `v2.1.1` (`5911c1b`) | the component library itself; `DCommon/` is a symlink to `dux-qml-common/DCommon` |
 | `duxlabs-dev/dux-files` | `2e96e2fd126239f23bedfd13f3a7be0c5db3a727` | reference for the sidebar collapse animation only (`WindowSidebarHost.qml`) |
+
+Both apps were re-read at `v2.1.1` when the library moved there. dcal's `v2.1.1` delta in `quickshell/`
+is `DButton` variants (this tree already used them) and the window-opacity / blur settings (already
+ported, including the one divergence noted below); the only part not taken is its Go blur probe. dfiles'
+`v2.1.1` is mostly its own vocabulary; only `core/internal/atomicfile` came over.
 
 ## How it was done
 

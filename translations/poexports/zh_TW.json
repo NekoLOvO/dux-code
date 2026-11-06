@@ -590,6 +590,9 @@
   "Its tools disappear from the agent. The command and environment are not touched.": {
     "Its tools disappear from the agent. The command and environment are not touched.": "它的工具會從代理手上消失。指令與環境變數不會被動到。"
   },
+  "Jump to a folder you visited": {
+    "Jump to a folder you visited": "跳到你去過的資料夾"
+  },
   "Keeps cards and panes solid when the window is see-through.": {
     "Keeps cards and panes solid when the window is see-through.": "視窗透明時，卡片與面板仍保持不透明。"
   },
@@ -766,6 +769,9 @@
   },
   "Not supported yet": {
     "Not supported yet": "尚未支援"
+  },
+  "Nothing is at this location": {
+    "Nothing is at this location": "這個位置沒有任何東西"
   },
   "Nothing matches \"%1\".": {
     "Nothing matches \"%1\".": "找不到符合「%1」的設定。"
@@ -1235,6 +1241,9 @@
   "This item no longer exists": {
     "This item no longer exists": "這個項目已經不在了"
   },
+  "This kind of location is not supported": {
+    "This kind of location is not supported": "不支援這種位置"
+  },
   "This model cannot read that much, so compaction actually happens at %1.": {
     "This model cannot read that much, so compaction actually happens at %1.": "此模型讀不了那麼多，因此實際上會在 %1 時壓縮。"
   },
@@ -1286,6 +1295,9 @@
   "Turning this off stops the server but keeps its settings.": {
     "Turning this off stops the server but keeps its settings.": "關掉只會停止這個伺服器，設定會留著。"
   },
+  "Type a path, ~ or an address such as sftp://host": {
+    "Type a path, ~ or an address such as sftp://host": "輸入路徑、~，或 sftp://host 這類位址"
+  },
   "Type to search every conversation.": {
     "Type to search every conversation.": "打字就能搜尋所有對話。"
   },
@@ -1318,6 +1330,9 @@
   },
   "Use this folder": {
     "Use this folder": "用這個資料夾"
+  },
+  "Use ~ for your own home folder or type the full path": {
+    "Use ~ for your own home folder or type the full path": "~ 只用於你自己的家目錄，其他使用者請輸入完整路徑"
   },
   "Using Dux Shell dynamic colors.": {
     "Using Dux Shell dynamic colors.": "使用 Dux Shell 動態配色。"
