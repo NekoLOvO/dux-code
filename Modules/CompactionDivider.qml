@@ -214,7 +214,6 @@ Item {
                 TextBlock {
                     width: parent.width
                     visible: root.tab === "summary"
-                    height: visible ? implicitHeight : 0
                     blk: root.summaryBlock
                     muted: true
                 }
@@ -224,7 +223,6 @@ Item {
                 StyledText {
                     width: parent.width
                     visible: root.tab === "summary"
-                    height: visible ? implicitHeight : 0
                     text: I18n.tr("The model reads this summary instead of the messages it replaced. They are still here, under Original conversation.", "compaction card: explanation under the summary tab")
                     font.pixelSize: Theme.fontSizeSmall
                     color: Theme.surfaceVariantText
@@ -315,7 +313,6 @@ Item {
                             TextBlock {
                                 width: parent.width
                                 visible: archRow.kind !== "tool"
-                                height: visible ? implicitHeight : 0
                                 muted: true
                                 blk: {
                                     return { "type": "prose", "items": Blockizer.parse(archRow.rawText || "") }
