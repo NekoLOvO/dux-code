@@ -320,8 +320,7 @@ Item {
         actions: [
             DButton {
                 text: I18n.tr("Cancel", "rename dialog cancel button")
-                backgroundColor: "transparent"
-                textColor: Theme.primary
+                variant: "text"
                 onClicked: renameDialog.rejected()
             },
             DButton {

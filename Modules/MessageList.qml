@@ -105,12 +105,13 @@ DListView {
             contentY = Math.max(originY, Math.min(_preFoldY - lost, contentHeight - height));
     }
 
-    // Back to top: turn follow off explicitly before jumping. positionViewAtBeginning() alone
-    // is not enough — a pending stickToEnd or a height change can pull it back, so it is
-    // repeated after the jump.
+    // Back to top: turn follow off explicitly before jumping. Asking for a position is not
+    // enough — a pending stickToEnd or a height change can pull it back — so the jump is an
+    // absolute contentY (DListView.resetScroll sets the same number) and it is repeated after
+    // the pending work has run.
     function scrollToTop() {
         follow = false;
-        positionViewAtBeginning();
+        resetScroll();
         Qt.callLater(list.verifyTop);
     }
 
