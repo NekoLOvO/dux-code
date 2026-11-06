@@ -9,6 +9,7 @@ package highlight
 
 import (
 	"bytes"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -97,7 +98,7 @@ func HTML(lang, code string, light bool) (string, error) {
 	}
 	buf.WriteString("</pre>")
 
-	out := buf.String()
+	out := splitSpansAtLines(buf.String())
 	mu.Lock()
 	if len(order) >= cacheLimit {
 		// Oldest out first. A real LRU is overkill: revisiting a block within one session is far
@@ -111,6 +112,87 @@ func HTML(lang, code string, light bool) (string, error) {
 
 	return out, nil
 }
+
+// splitSpansAtLines closes every open <span> at a newline and reopens it on the next line, but only
+// where a span carries a background colour.
+//
+// Qt's rich text paints a span background lazily across the line break: a diff card's red or green
+// run bleeds into the tail of the following line, which reads as the wrong line being marked. A
+// foreground colour crossing a newline is harmless, so text-colour spans are left alone — otherwise a
+// long block would grow a tag pair per line for nothing.
+func splitSpansAtLines(html string) string {
+	var b strings.Builder
+	b.Grow(len(html) + len(html)/8)
+
+	// open is the stack of span tags currently in effect; styled records which of them carry a
+	// background, so the decision is "does any open span have one" rather than "is a span open".
+	type span struct {
+		tag   string
+		paint bool
+	}
+	var open []span
+
+	for i := 0; i < len(html); {
+		if html[i] == '\n' {
+			painted := false
+			for _, s := range open {
+				if s.paint {
+					painted = true
+					break
+				}
+			}
+			if painted {
+				// Close in reverse, then reopen in order: HTML nesting has to stay well formed.
+				for j := len(open) - 1; j >= 0; j-- {
+					b.WriteString("</span>")
+				}
+			}
+			b.WriteByte('\n')
+			if painted {
+				for _, s := range open {
+					b.WriteString(s.tag)
+				}
+			}
+			i++
+			continue
+		}
+
+		if html[i] == '<' {
+			end := strings.IndexByte(html[i:], '>')
+			if end < 0 {
+				b.WriteString(html[i:])
+				break
+			}
+			tag := html[i : i+end+1]
+			switch {
+			case strings.HasPrefix(tag, "<span") && !strings.HasSuffix(tag, "/>"):
+				open = append(open, span{tag: tag, paint: strings.Contains(tag, "background-color")})
+			case tag == "</span>" && len(open) > 0:
+				open = open[:len(open)-1]
+			}
+			b.WriteString(tag)
+			i += end + 1
+			continue
+		}
+
+		b.WriteByte(html[i])
+		i++
+	}
+	// A span that held nothing but the newline leaves an empty pair behind; with a background it
+	// would paint a sliver at the start of the next line.
+	out := b.String()
+	for {
+		trimmed := emptySpan.ReplaceAllString(out, "")
+		if trimmed == out {
+			return out
+		}
+		out = trimmed
+	}
+}
+
+// An empty span pair. The tag bodies can be empty, so this has to be a regexp rather than a
+// strings.Replace.
+var emptySpan = regexp.MustCompile(`<span[^>]*></span>`)
 
 func cacheKey(lang, code string, light bool) string {
 	var b strings.Builder

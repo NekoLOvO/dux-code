@@ -72,3 +72,60 @@ func min(a, b int) int {
 	}
 	return b
 }
+
+// --- no span crosses a newline ---
+//
+// Qt paints a span's background lazily across a line break, so a diff card's red run bled into the
+// tail of the next line and marked the wrong one. A painted span must therefore end where its line
+// ends.
+func TestBackgroundSpansStopAtNewline(t *testing.T) {
+	cases := []struct {
+		name string
+		lang string
+		code string
+	}{
+		{"diff", "diff", "- removed\n+ added\n  context\n"},
+		{"two hunks", "diff", "@@ -1 +1 @@\n-old\n+new\n"},
+		{"no language", "", "a\nb\n"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			out, err := HTML(tc.lang, tc.code, false)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if out == "" {
+				t.Skip("not highlighted, so there is no span to test")
+			}
+
+			// Walk the HTML and fail as soon as a painted span is still open at a newline.
+			var painted int
+			for i := 0; i < len(out); i++ {
+				switch {
+				case out[i] == '\n':
+					if painted > 0 {
+						t.Fatalf("a background span is still open at a newline:\n%s", out)
+					}
+				case strings.HasPrefix(out[i:], "<span"):
+					end := strings.IndexByte(out[i:], '>')
+					if end < 0 {
+						break
+					}
+					if strings.Contains(out[i:i+end], "background-color") {
+						painted++
+					}
+					i += end
+				case strings.HasPrefix(out[i:], "</span>"):
+					if painted > 0 {
+						painted--
+					}
+					i += len("</span>") - 1
+				}
+			}
+			if strings.Contains(out, "></span>") {
+				t.Errorf("an empty span pair was left behind: %s", out)
+			}
+		})
+	}
+}
