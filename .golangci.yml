@@ -1,0 +1,11 @@
+# golangci-lint. Run it from core/, where go.mod is, so `./...` means the daemon's packages.
+version: "2"
+
+issues:
+  # No cap: the defaults report at most three instances of the same message, which hides real findings.
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters:
+  # errcheck, govet, ineffassign, staticcheck, unused.
+  default: standard

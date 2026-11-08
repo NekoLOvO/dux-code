@@ -1,0 +1,75 @@
+// This repository only.
+//
+// Anything that would still be true in another project — which formatter handles Go and QML, that
+// Markdown keeps its trailing spaces, gopls' semantic tokens — lives in the user settings, so it does
+// not have to be copied into every repository. What is left here is paths and facts about this tree.
+{
+  // ── gopls ─────────────────────────────────────────────────────────────────────────────────────
+  //
+  // Build output, not source. `core/internal/uibundle/dist` is a copy of the whole QML tree that
+  // `make build` assembles for embedding (329 files — 39% of everything in the repository), and
+  // `dist/` is the release archive's staging area. Without this gopls indexes them on every reload.
+  //
+  // The nested form matters: the Go extension declares one `gopls` object whose keys carry gopls'
+  // own namespaces, so the setting is `gopls` → `build.directoryFilters`. A flat
+  // "gopls.build.directoryFilters" at the top level, or a bare "directoryFilters", is silently
+  // ignored — the same failure as any mistyped setting, with no warning anywhere.
+  //
+  // The tag is what makes gopls see `core/internal/uibundle/embed.go` at all: it is behind
+  // `//go:build embedui`, so without it the file is invisible to the analysis. The cost is that its
+  // `//go:embed all:dist` needs the directory `make build` assembles — a fresh clone, or `make dev`,
+  // leaves embed.go reporting "pattern all:dist: no matching files found" until then, which is a real
+  // error about a real state rather than a wrong one. `make build` once, and it goes.
+  "gopls": { "buildFlags": ["-tags=embedui"], "build.directoryFilters": ["-dist", "-core/bin", "-core/internal/uibundle/dist"] },
+
+  // ── Go ────────────────────────────────────────────────────────────────────────────────────────
+  //
+  // core/internal/mcp's tests start a helper process and wait up to 20 seconds for it, several times
+  // over; the 30s default is too tight for this suite.
+  "go.testTimeout": "120s",
+
+  // ── QML ───────────────────────────────────────────────────────────────────────────────────────
+  //
+  // There is no CMakeLists.txt anywhere in this tree, so qmlls must not spend its startup probing for
+  // one. A project that does use CMake wants the opposite, which is why this is not in the user
+  // settings.
+  "qt-qml.qmlls.useNoCMakeCalls": true,
+
+  // The generated qmldir index, from tools/qmllint-farm.py. Quickshell resolves `import qs.Common`
+  // itself, at run time, by synthesizing a qmldir in memory; qmlls is a separate program with no such
+  // interceptor, so without this every `qs.*` import fails and everything the module exports is
+  // reported as unqualified — 3228 diagnostics instead of 255. `make qmllint` builds the index (it is
+  // a cache, rebuilt on every run); if the squiggles come back, run it, or the task of the same name.
+  //
+  // `${userHome}` is expanded by the extension, not by VS Code. A machine with XDG_CACHE_HOME set puts
+  // the index somewhere else, and then this path has to say so too.
+  "qt-qml.qmlls.additionalImportPaths": ["${userHome}/.cache/dcode-qmllint"],
+
+  // ── Python ───────────────────────────────────────────────────────────────────────────────────
+  //
+  // The checks under tools/ are typed for the editor's strict mode, which is a user setting and
+  // analyses the whole workspace. Three directories are not ours to satisfy: the submodule (upstream's
+  // two scripts are unannotated, and strict mode reports every untyped parameter, 216 errors), and the
+  // two copies of the tree a build leaves behind. `core/internal/uibundle/dist` is the one that bites:
+  // it holds its own copy of translations/extract_translations.py, so the same script appears twice and
+  // the copy goes stale (it is already behind the original).
+  //
+  // `exclude` rather than `ignore`: nothing here imports them, so there is no reason to analyse them at
+  // all. Note that files under an excluded path are still analysed if an included file imports them.
+  //
+  // This list only applies while there is no `pyrightconfig.json` and no `[tool.pyright]` in a
+  // pyproject.toml: either one existing makes Pylance ignore every python.analysis setting here, and
+  // the submodule starts reporting again with nothing to point at.
+  "python.analysis.exclude": [
+    "dux-qml-common",
+    "core/internal/uibundle/dist",
+    "dist"
+  ],
+
+  // ── Files ────────────────────────────────────────────────────────────────────────────────────
+  //
+  // Hidden from the explorer and from the file watcher, so a search result list and a save do not have
+  // to wade through copies of the tree it is watching. Search already skips them through .gitignore.
+  "files.exclude": { "core/bin": true, "core/internal/uibundle/dist": true, "dist": true },
+  "files.watcherExclude": { "**/core/bin/**": true, "**/core/internal/uibundle/dist/**": true, "**/dist/**": true }
+}

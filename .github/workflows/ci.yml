@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A branch that gets two pushes in a row only needs the second answer.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Nothing here writes anything back to the repository.
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The UI lives in a submodule, and `make check` compares its Theme against ours.
+          submodules: recursive
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: core/go.mod
+          cache-dependency-path: core/go.sum
+
+      - name: Static checks
+        # `make check` minus the QML linter: the submodule, the Theme contract, window parents,
+        # signal arity, the desktop entry and the version shapes. Without a dux-calendar checkout the
+        # app-layer Theme comparison skips itself, which is the intended behaviour on a machine that
+        # only has this repository.
+        #
+        # qmllint is the part that cannot run here, and it is not for want of trying. Its verdict is
+        # version-shaped: 6.4 (what Ubuntu 24.04 packages) cannot parse `pragma ComponentBehavior`,
+        # and `.qmllint.ini` demotes categories by name, so a linter that has never heard of one is
+        # not the same gate. The official Qt binaries install-qt-action would fetch are no better —
+        # 6.12.0's Qt6Core links libicui18n.so.73 while the runner has ICU 74, so qmllint does not
+        # even start (measured: exit 127, before any file is read). So the lint stays on the machine
+        # the UI is developed on, where `make check` runs it, and CI runs the rest.
+        run: make check-static
+
+      - name: Formatting
+        # gofmt is not a style opinion here, it is the only formatting the tree has ever had;
+        # a diff that skips it would be the first one.
+        working-directory: core
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            echo "::error::gofmt wants to rewrite:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Vet and test
+        working-directory: core
+        run: |
+          go vet ./...
+          go test ./...
+
+      - name: Translations
+        # Every user-facing string is extracted from the source; a table that no longer matches the
+        # code means someone added a string and forgot `make i18n`.
+        run: make i18n-status
+
+      - name: Packaged build
+        # The shipping path is a build with the QML tree embedded, which CI can break in ways
+        # `go test` cannot see (a bad sync-shell, a missing directory in UI_DIRS).
+        run: make -C core build
+
+      - name: Assets install into an empty root
+        # install-assets is the half of `make install` that CI never exercises: it writes the
+        # .desktop file and the icon, and a broken path there is invisible until someone installs.
+        run: make install-assets PREFIX=/usr DESTDIR="$RUNNER_TEMP/stage"
+
+      - name: The staged install looks like a program
+        run: |
+          stage="$RUNNER_TEMP/stage"
+          test -f "$stage/usr/share/applications/com.nekolovo.dcode.desktop"
+          test -f "$stage/usr/share/icons/hicolor/scalable/apps/com.nekolovo.dcode.svg"
+          grep -q "^Exec=" "$stage/usr/share/applications/com.nekolovo.dcode.desktop"

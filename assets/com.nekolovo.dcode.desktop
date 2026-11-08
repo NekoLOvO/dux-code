@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=Dux Code
+GenericName=Coding Agent
+GenericName[zh_TW]=編碼代理
+Comment=Native coding agent for the Dux Shell desktop
+Comment[zh_TW]=Dux Shell 桌面的原生編碼代理
+Exec=dcode ui
+Icon=com.nekolovo.dcode
+Terminal=false
+Categories=Development;Qt;
+Keywords=code;agent;llm;chat;ai;
+Keywords[zh_TW]=code;agent;llm;chat;ai;程式;程式碼;編碼;代理;對話;聊天;
+StartupNotify=true
+StartupWMClass=com.nekolovo.dcode

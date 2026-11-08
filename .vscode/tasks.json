@@ -1,0 +1,61 @@
+// The Makefile is the entry point for everything (AGENTS.md says so), so the editor should call it
+// rather than reimplement `go test` or `go build`. No problem matchers: these targets print their own
+// summaries and never emit `file:line:col`, so an empty matcher is the honest choice.
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "make check",
+            "detail": "upstream contract, Theme tokens, window parents, English source, version shapes",
+            "type": "shell",
+            "command": "make check",
+            "group": { "kind": "test", "isDefault": true },
+            "problemMatcher": []
+        },
+        { "label": "make test", "detail": "go test ./... in core/", "type": "shell", "command": "make test", "problemMatcher": [] },
+        {
+            "label": "make build",
+            "detail": "embed the QML tree and build core/bin/dcode",
+            "type": "shell",
+            "command": "make build",
+            "group": { "kind": "build", "isDefault": true },
+            "problemMatcher": []
+        },
+        {
+            "label": "make dev",
+            "detail": "build without embedding the UI (fast; for `dcode ui -c .`)",
+            "type": "shell",
+            "command": "make dev",
+            "problemMatcher": []
+        },
+        {
+            "label": "make hot",
+            "detail": "build, then run the QML from this tree in a fresh Quickshell",
+            "type": "shell",
+            "command": "make hot",
+            "problemMatcher": [],
+            "presentation": { "reveal": "always", "panel": "dedicated" }
+        },
+        {
+            "label": "make i18n-status",
+            "detail": "how many strings each locale is missing",
+            "type": "shell",
+            "command": "make i18n-status",
+            "problemMatcher": []
+        },
+        {
+            "label": "make version",
+            "detail": "the version string this build would carry (the target lives in core/Makefile)",
+            "type": "shell",
+            "command": "make -C core version",
+            "problemMatcher": []
+        },
+        {
+            "label": "qmllint: rebuild module index",
+            "detail": "regenerate the qmldir index qmlls reads (the default path, same as make qmllint)",
+            "type": "shell",
+            "command": "python3 tools/qmllint-farm.py",
+            "problemMatcher": []
+        }
+    ]
+}

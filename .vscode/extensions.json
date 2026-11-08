@@ -1,0 +1,10 @@
+// What this tree is edited with. Everything else (C++, Python, Rust…) is a matter of taste.
+{
+    "recommendations": [
+        // core/ — gopls, the formatter and the test runner.
+        "golang.go",
+        // QML. Pulls in theqtcompany.qt-core as a dependency, which is what holds the Qt installation
+        // settings the QML extension reads.
+        "theqtcompany.qt-qml"
+    ]
+}

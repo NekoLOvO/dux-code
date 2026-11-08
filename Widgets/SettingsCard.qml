@@ -1,0 +1,28 @@
+import QtQuick
+
+Column {
+    id: root
+
+    // Lets the settings search walk the page and name the card a row belongs to.
+    readonly property bool isSettingsCard: true
+
+    property string title: ""
+    default property alias content: contentGroup.data
+    property alias headerActions: sectionLabel.actions
+    readonly property bool hasHeader: title !== ""
+
+    width: parent?.width ?? 0
+    spacing: 0
+
+    SettingsSectionLabel {
+        id: sectionLabel
+        width: parent.width
+        text: root.title
+        visible: root.hasHeader
+    }
+
+    SettingsGroup {
+        id: contentGroup
+        width: parent.width
+    }
+}
